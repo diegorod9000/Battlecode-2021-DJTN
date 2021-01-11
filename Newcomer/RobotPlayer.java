@@ -73,18 +73,71 @@ public strictfp class RobotPlayer {
         }
     }
 
+    // Politician AI
     static void runPolitician() throws GameActionException {
         Team enemy = rc.getTeam().opponent();
         int actionRadius = rc.getType().actionRadiusSquared;
-        RobotInfo[] attackable = rc.senseNearbyRobots(actionRadius, enemy);
-        if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
-            System.out.println("empowering...");
-            rc.empower(actionRadius);
-            System.out.println("empowered");
-            return;
+        MapLocation[] enemies = rc.detectNearbyRobots();
+        for (int i = 0; i < enemies.length; i++) {
+
         }
-        if (tryMove(randomDirection()))
-            System.out.println("I moved!");
+        boolean winning = true;
+
+        if (rc.isReady()) {
+        }
+        RobotInfo[] attackable = rc.senseNearbyRobots(actionRadius, enemy);
+        RobotInfo[] nuetralECs = rc.senseNearbyRobots(actionRadius);
+        boolean nearNeutralEC = false;
+        for (int i = 0; i < nuetralECs.length; i++) {
+            // System.out.println("Near " + nuetralECs[i].getType().toString());
+            if (nuetralECs[i].getType().equals(RobotType.ENLIGHTENMENT_CENTER) && rc.canEmpower(actionRadius)) {
+                System.out.println("Near Enlightenment Center with team" + nuetralECs[i].getTeam().toString()
+                        + " with conviction " + nuetralECs[i].getConviction());
+                if (nuetralECs[i].getTeam().equals(rc.getTeam().opponent())) {
+                    System.out.println("yes");
+                    rc.empower(actionRadius);
+                    System.out.println("Attacking Enlightenment Center");
+                    return;
+                }
+            }
+        }
+        // System.out.println("" + rc.getTeamVotes() + " " + rc.getRoundNum());
+        double score = rc.getTeamVotes() / rc.getRoundNum();
+        if (score >= .3) {
+            if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
+                System.out.println("empowering...");
+                rc.empower(actionRadius);
+                System.out.println("empowered");
+                return;
+            }
+
+        } else {
+            winning = false;
+            // System.out.println("We are losing badly so I will not attack");
+        }
+
+        if (winning || attackable.length == 0) {
+            if (tryMove(randomDirection()))
+                System.out.println("I moved!");
+        } else {
+            Direction[] available = new Direction[8];
+            for (int i = 0; i < attackable.length && i < 8; i++) {
+                if (attackable[i].getTeam().equals(rc.getTeam().opponent())) {
+                    available[i] = attackable[i].getLocation().directionTo(rc.getLocation());
+                }
+            }
+            boolean hasMoved = false;
+            if (available.length != 0) {
+                for (int i = 0; i < available.length && !hasMoved; i++) {
+                    if (available[i] != null && tryMove(available[i])) {
+                        hasMoved = true;
+                        System.out.println("Politician has moved");
+                    }
+                }
+
+            }
+        }
+
     }
 
     // Slanderer AI
@@ -103,14 +156,22 @@ public strictfp class RobotPlayer {
     // Makes the robot move randomly, with a priority for diagonals
     static void scatter() throws GameActionException {
         Direction move_dir=Direction.NORTH;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i  <  4; i++) {
             int choice = (int) (Math.random() * 4);
             switch(choice){
-                case 0: move_dir=Direction.NORTHEAST; break;
-                case 1: move_dir=Direction.NORTHWEST; break;
-                case 2: move_dir=Direction.SOUTHEAST; break;
-                case 3: move_dir=Direction.SOUTHWEST; break;
+                ca se 0: mo ve_dir=Direction.NORTHEAST; break;
+                case 1:
+                    move_dir = Direction.NORTHWEST;
+                    break;
+                case 2:
+                    move_dir = Direction.SOUTHEAST;
+                    break;
+                case 3:
+                    move_dir = Direction.SOUTHWEST;
+                    break;
             }
+                      
+                    
             if (tryMove(move_dir)) {
                 return;
             } 
@@ -118,16 +179,24 @@ public strictfp class RobotPlayer {
         for (int i = 0; i < 4; i++) {
             int choice = (int) (Math.random() * 4);
             switch(choice){
-                case 0: move_dir=Direction.NORTH; break;
-                case 1: move_dir=Direction.WEST; break;
-                case 2: move_dir=Direction.SOUTH; break;
-                case 3: move_dir=Direction.EAST; break;
+                ca se 0: mo ve_dir=Direction.NORTH; break;
+                case 1:
+                    move_dir = Direction.WEST; 
+                    reak;
+                case 2:
+                    move_dir = Direction.SOUTH
+                     break;
+                case 3:
+                    move_dir = Direction.EAST; 
+                    reak;
             }
+                      
+                    
             if (tryMove(move_dir)) {
                 return;
             } 
         }
-    }
+        
 
     // Makes the robot run away from threats
     static void flee(int detectionRadius, RobotInfo[] threat) throws GameActionException {
