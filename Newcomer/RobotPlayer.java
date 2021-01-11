@@ -12,6 +12,14 @@ public strictfp class RobotPlayer {
 
     static int turnCount;
 
+    static Team teammate = rc.getTeam();
+    static int actionRadius = rc.getType().actionRadiusSquared;
+    for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
+        if (robot.type = RobotType.ENLIGHTENMENT_CENTER) {
+            static final MapLocation origin = robot.getLocation();
+        }
+    }	
+
     /**
      * run() is the method that is called when a robot is instantiated in the
      * Battlecode world. If this method returns, the robot dies!
@@ -144,8 +152,8 @@ public strictfp class RobotPlayer {
 	    			highestPassability = passability;
 
 	    		} else if (passability == highestPassability) { // break passability ties (currently using distance)
-		    		double nextDist = location.add(nextDir).distanceSquaredTo(HOME);
-		    		double dirDist = location.add(dirDist).distanceSquaredTo(HOME);
+		    		double nextDist = location.add(nextDir).distanceSquaredTo(origin);
+		    		double dirDist = location.add(dirDist).distanceSquaredTo(origin);
 
 	    			if (dirDist > nextDist) {
 	    				nextDir = dir;
@@ -166,8 +174,8 @@ public strictfp class RobotPlayer {
     		Direction leftDir = opp.rotateLeft(), rightDir = opp.rotateRight();
 
     		if (leftDir.canMove() & rightDir.canMove()) {
-	    		double leftDist = location.add(leftDir).distanceSquaredTo(HOME);
-	    		double rightDist = location.add(rightDir).distanceSquaredTo(HOME);
+	    		double leftDist = location.add(leftDir).distanceSquaredTo(origin);
+	    		double rightDist = location.add(rightDir).distanceSquaredTo(origin);
 
 	    		if (leftDist > rightDist) {
 	    			nextDir = leftDir;
