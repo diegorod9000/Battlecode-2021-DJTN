@@ -101,7 +101,7 @@ public strictfp class RobotPlayer {
         for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, enemy)) {
             if (robot.type.canBeExposed()) {
                 // It's a slanderer... go get them!
-                enemyDetected = false;
+                enemyNotDetected = false;
                 if (rc.canExpose(robot.location)) {
                     System.out.println("e x p o s e d");
                     rc.expose(robot.location);
