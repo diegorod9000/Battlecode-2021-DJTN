@@ -95,9 +95,13 @@ public strictfp class RobotPlayer {
     static void runMuckraker() throws GameActionException {
         Team enemy = rc.getTeam().opponent();
         int actionRadius = rc.getType().actionRadiusSquared;
+
+        boolean enemyNotDetected = true;
+
         for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, enemy)) {
             if (robot.type.canBeExposed()) {
                 // It's a slanderer... go get them!
+                enemyDetected = false;
                 if (rc.canExpose(robot.location)) {
                     System.out.println("e x p o s e d");
                     rc.expose(robot.location);
@@ -105,8 +109,83 @@ public strictfp class RobotPlayer {
                 }
             }
         }
-        if (tryMove(randomDirection()))
-            System.out.println("I moved!");
+
+        // Take a step if Muckraker doesn't find any Politicians to expose
+        if (enemyNotDetected) { // Does this need to be (enemyNotDetected == true)??? fuck java
+        	leastResistanceStep();
+        }
+    }
+    
+    /**
+     * Takes a step in the direction with the highest passability
+     * Made specifically for Muckrakers, as it deliberately moves away from home (if keeping a home stat is possible??)
+     *
+     * @return desired Direction for next step (nextDir)
+     */
+    static void leastResistanceStep() throws GameActionException {
+    	// get current direction
+    	MapLocation location = rc.getLocation(); // get current location
+    	Direction awayFromHome = location.directionTo(HOME).opposite(); // find direction poiting away from home
+    	// need way to keep loc of original enlightenment center ^^ !!
+
+
+    	// look in all forward/side (not backward) directions for easiest path
+    	Direction nextDir = new Direction();
+    	double highestPassability = null;
+    	Direction dir = awayFromHome.rotateLeft().rotateLeft();
+
+    	for (i=0; i < 4; i++) {
+    		MapLocation check = location.add(dir); // location to be checked
+    		passability = sensePassability(check); // looking at passability
+
+    		if (check.canMove()) {
+				if (passability > highestPassability || highestPassability == null) {
+	    			nextDir = dir;
+	    			highestPassability = passability;
+
+	    		} else if (passability == highestPassability) { // break passability ties (currently using distance)
+		    		double nextDist = location.add(nextDir).distanceSquaredTo(HOME);
+		    		double dirDist = location.add(dirDist).distanceSquaredTo(HOME);
+
+	    			if (dirDist > nextDist) {
+	    				nextDir = dir;
+	    			
+	    			// Idea: choose random direction to keep?
+	    			// scala???? idk how to import
+	    			}
+	    		}	
+    		}
+    		dir = dir.rotateRight(); // check nest direction
+    	}
+
+
+    	// checking if none of the directions are available (ie approached wall/corner)
+    	// unlikely this clause will be entered
+    	if (lowestPassability == null) {
+    		Direction opp = awayFromHome.opposite();
+    		Direction leftDir = opp.rotateLeft(), rightDir = opp.rotateRight();
+
+    		if (leftDir.canMove() & rightDir.canMove()) {
+	    		double leftDist = location.add(leftDir).distanceSquaredTo(HOME);
+	    		double rightDist = location.add(rightDir).distanceSquaredTo(HOME);
+
+	    		if (leftDist > rightDist) {
+	    			nextDir = leftDir;
+	    		} else {
+	    			nextDir = rightDir;
+	    		}
+    		} else if (leftDir.canMove() & !rightDir.canMove()) {
+    			nextDir = leftDir;
+    		} else if (rightDir.canMove() & !leftDir.canMove()) {
+    			nextDir = rightDir;
+    		} else if (opp.canMove()) {
+    			nextDir = opp;
+    		} else {
+    			nextDir = Direction.CENTER;
+    		}
+    	}
+
+    	return nextDir
     }
 
     /**
