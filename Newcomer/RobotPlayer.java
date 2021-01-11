@@ -87,9 +87,164 @@ public strictfp class RobotPlayer {
             System.out.println("I moved!");
     }
 
+    // Slanderer AI
     static void runSlanderer() throws GameActionException {
-        if (tryMove(randomDirection()))
-            System.out.println("I moved!");
+        // detect if an enemy is within range
+        Team enemy = rc.getTeam().opponent();
+        int detectionRadius = rc.getType().detectionRadiusSquared;
+        RobotInfo[] threat = rc.senseNearbyRobots(detectionRadius, enemy);
+        if (threat.length == 0)
+            scatter();
+        else
+            flee(detectionRadius, threat);
+
+    }
+
+    // Makes the robot move randomly, with a priority for diagonals
+    static void scatter() throws GameActionException {
+        Direction move_dir=Direction.NORTH;
+        for (int i = 0; i < 4; i++) {
+            int choice = (int) (Math.random() * 4);
+            switch(choice){
+                case 0: move_dir=Direction.NORTHEAST; break;
+                case 1: move_dir=Direction.NORTHWEST; break;
+                case 2: move_dir=Direction.SOUTHEAST; break;
+                case 3: move_dir=Direction.SOUTHWEST; break;
+            }
+            if (tryMove(move_dir)) {
+                return;
+            } 
+        }
+        for (int i = 0; i < 4; i++) {
+            int choice = (int) (Math.random() * 4);
+            switch(choice){
+                case 0: move_dir=Direction.NORTH; break;
+                case 1: move_dir=Direction.WEST; break;
+                case 2: move_dir=Direction.SOUTH; break;
+                case 3: move_dir=Direction.EAST; break;
+            }
+            if (tryMove(move_dir)) {
+                return;
+            } 
+        }
+    }
+
+    // Makes the robot run away from threats
+    static void flee(int detectionRadius, RobotInfo[] threat) throws GameActionException {
+        MapLocation spot = rc.getLocation();
+        System.out.println("Threat Detected!");
+        int xPos = spot.x;
+        int yPos = spot.y;
+        int yPriority = 0;
+        int xPriority = 0;
+        for (RobotInfo robot : threat) {
+            MapLocation threatPos = robot.getLocation();
+            int threatX = threatPos.x - xPos;
+            int threatY = threatPos.y - yPos;
+            if (threatX < 0) {
+                xPriority -= (detectionRadius - threatX + 1);
+            } else if (threatX > 0) {
+                xPriority += (detectionRadius - threatX + 1);
+            }
+
+            if (threatY < 0) {
+                yPriority -= (detectionRadius - threatY + 1);
+            } else if (threatY > 0) {
+                yPriority += (detectionRadius - threatY + 1);
+            }
+        }
+
+        if (xPriority == 0) {
+            if (yPriority == 0) {
+                tryMove(Direction.NORTH);
+                return;
+            }
+            if (yPriority > 0) {
+                if (tryMove(Direction.SOUTHWEST))
+                    return;
+                if (tryMove(Direction.SOUTHEAST))
+                    return;
+                if (tryMove(Direction.SOUTH))
+                    return;
+                if (tryMove(Direction.EAST))
+                    return;
+                if (tryMove(Direction.WEST))
+                    return;
+            }
+            if (yPriority < 0) {
+                if (tryMove(Direction.NORTHWEST))
+                    return;
+                if (tryMove(Direction.NORTHEAST))
+                    return;
+                if (tryMove(Direction.NORTH))
+                    return;
+                if (tryMove(Direction.EAST))
+                    return;
+                if (tryMove(Direction.WEST))
+                    return;
+            }
+        }
+
+        if (xPriority > 0) {
+            if (yPriority == 0) {
+                if (tryMove(Direction.NORTHWEST))
+                    return;
+                if (tryMove(Direction.SOUTHWEST))
+                    return;
+                if (tryMove(Direction.WEST))
+                    return;
+                if (tryMove(Direction.NORTH))
+                    return;
+                if (tryMove(Direction.SOUTH))
+                    return;
+            }
+            if (yPriority > 0) {
+                if (tryMove(Direction.SOUTHWEST))
+                    return;
+                if (tryMove(Direction.SOUTH))
+                    return;
+                if (tryMove(Direction.WEST))
+                    return;
+            }
+            if (yPriority < 0) {
+                if (tryMove(Direction.NORTHWEST))
+                    return;
+                if (tryMove(Direction.NORTH))
+                    return;
+                if (tryMove(Direction.WEST))
+                    return;
+            }
+        }
+        if (xPriority < 0) {
+            if (yPriority == 0) {
+                if (tryMove(Direction.NORTHEAST))
+                    return;
+                if (tryMove(Direction.SOUTHEAST))
+                    return;
+                if (tryMove(Direction.EAST))
+                    return;
+                if (tryMove(Direction.NORTH))
+                    return;
+                if (tryMove(Direction.SOUTH))
+                    return;
+            }
+            if (yPriority > 0) {
+                if (tryMove(Direction.SOUTHEAST))
+                    return;
+                if (tryMove(Direction.SOUTH))
+                    return;
+                if (tryMove(Direction.EAST))
+                    return;
+            }
+            if (yPriority < 0) {
+                if (tryMove(Direction.NORTHEAST))
+                    return;
+                if (tryMove(Direction.NORTH))
+                    return;
+                if (tryMove(Direction.EAST))
+                    return;
+            }
+        }
     }
 
     static void runMuckraker() throws GameActionException {
