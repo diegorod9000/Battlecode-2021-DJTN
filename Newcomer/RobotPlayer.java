@@ -11,6 +11,8 @@ public strictfp class RobotPlayer {
             Direction.SOUTH, Direction.SOUTHWEST, Direction.WEST, Direction.NORTHWEST, };
 
     static int turnCount;
+    static MapLocation origin = null;
+
 
     static Team teammate = rc.getTeam();
     static int actionRadius = rc.getType().actionRadiusSquared;
@@ -342,6 +344,16 @@ public strictfp class RobotPlayer {
                     return;
                 }
             }
+        }
+
+        if (origin == null) {
+	    static Team teammate = rc.getTeam();
+	    static int actionRadius = rc.getType().actionRadiusSquared;
+	    for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
+		if (robot.type = RobotType.ENLIGHTENMENT_CENTER) {
+		    origin = robot.getLocation();
+		}
+	    }    	
         }
 
         // Take a step if Muckraker doesn't find any Politicians to expose
