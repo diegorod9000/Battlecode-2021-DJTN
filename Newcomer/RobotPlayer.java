@@ -13,15 +13,6 @@ public strictfp class RobotPlayer {
     static int turnCount;
     static MapLocation origin = null;
 
-
-    static Team teammate = rc.getTeam();
-    static int actionRadius = rc.getType().actionRadiusSquared;
-    for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
-        if (robot.type = RobotType.ENLIGHTENMENT_CENTER) {
-            static final MapLocation origin = robot.getLocation();
-        }
-    }	
-
     /**
      * run() is the method that is called when a robot is instantiated in the
      * Battlecode world. If this method returns, the robot dies!
