@@ -338,8 +338,8 @@ public strictfp class RobotPlayer {
         }
 
         if (origin == null) {
-	    static Team teammate = rc.getTeam();
-	    static int actionRadius = rc.getType().actionRadiusSquared;
+	    Team teammate = rc.getTeam();
+	    int actionRadius = rc.getType().actionRadiusSquared;
 	    for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
 		if (robot.type = RobotType.ENLIGHTENMENT_CENTER) {
 		    origin = robot.getLocation();
