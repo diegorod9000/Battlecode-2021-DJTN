@@ -431,7 +431,7 @@ public strictfp class RobotPlayer {
     		}
     	}
 
-    	return nextDir
+    	return nextDir;
     }
 
     /**
