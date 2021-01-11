@@ -36,7 +36,7 @@ public strictfp class RobotPlayer {
 
         System.out.println("I'm a " + rc.getType() + " and I just got created!");
         while (true) {
-            turnCount++;
+            turnCount += 1;
             // Try/catch blocks stop unhandled exceptions, which cause your robot to freeze
             try {
                 // Here, we've separated the controls into a different method for each
@@ -81,18 +81,71 @@ public strictfp class RobotPlayer {
         }
     }
 
+    //Politician AI
     static void runPolitician() throws GameActionException {
         Team enemy = rc.getTeam().opponent();
         int actionRadius = rc.getType().actionRadiusSquared;
-        RobotInfo[] attackable = rc.senseNearbyRobots(actionRadius, enemy);
-        if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
-            System.out.println("empowering...");
-            rc.empower(actionRadius);
-            System.out.println("empowered");
-            return;
+        MapLocation[] enemies = rc.detectNearbyRobots();
+        for (int i = 0; i < enemies.length;i++){
+            continue;
         }
-        if (tryMove(randomDirection()))
-            System.out.println("I moved!");
+        boolean winning = true;
+
+        if (rc.isReady()){
+        }
+        RobotInfo[] attackable = rc.senseNearbyRobots(actionRadius, enemy);
+        RobotInfo[] nuetralECs = rc.senseNearbyRobots(actionRadius);
+        boolean nearNeutralEC = false;
+        for (int i = 0; i < nuetralECs.length; i++) {
+            //System.out.println("Near " + nuetralECs[i].getType().toString());
+            if (nuetralECs[i].getType().equals(RobotType.ENLIGHTENMENT_CENTER) && rc.canEmpower(actionRadius)) {
+                System.out.println("Near Enlightenment Center with team" + nuetralECs[i].getTeam().toString() + " with conviction " + nuetralECs[i].getConviction());
+                if (nuetralECs[i].getTeam().equals(rc.getTeam().opponent())){
+                    System.out.println("yes");
+                    rc.empower(actionRadius);
+                    System.out.println("Attacking Enlightenment Center");
+                    return;
+                }
+            }
+        }
+//        System.out.println("" + rc.getTeamVotes() + " " + rc.getRoundNum());
+        double score = rc.getTeamVotes() / rc.getRoundNum();
+        if (score >= .3) {
+            if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
+                System.out.println("empowering...");
+                rc.empower(actionRadius);
+                System.out.println("empowered");
+                return;
+            }
+
+        } else {
+            winning = false;
+            //System.out.println("We are losing badly so I will not attack");
+        }
+
+        if (winning || attackable.length == 0){
+            if (tryMove(randomDirection()))
+                System.out.println("I moved!");
+        }
+        else{
+            Direction[] available = new Direction[8];
+            for (int i = 0; i < attackable.length && i < 8;i++){
+                if (attackable[i].getTeam().equals(rc.getTeam().opponent())) {
+                    available[i] = attackable[i].getLocation().directionTo(rc.getLocation());
+                }
+            }
+            boolean hasMoved = false;
+            if (available.length != 0){
+                for (int i = 0; i < available.length && !hasMoved; i++){
+                    if (available[i] != null && tryMove(available[i])){
+                        hasMoved = true;
+                        System.out.println("Politician has moved");
+                    }
+                }
+
+            }
+        }
+
     }
 
     // Slanderer AI
@@ -110,30 +163,46 @@ public strictfp class RobotPlayer {
 
     // Makes the robot move randomly, with a priority for diagonals
     static void scatter() throws GameActionException {
-        Direction move_dir=Direction.NORTH;
+        Direction move_dir = Direction.NORTH;
         for (int i = 0; i < 4; i++) {
             int choice = (int) (Math.random() * 4);
-            switch(choice){
-                case 0: move_dir=Direction.NORTHEAST; break;
-                case 1: move_dir=Direction.NORTHWEST; break;
-                case 2: move_dir=Direction.SOUTHEAST; break;
-                case 3: move_dir=Direction.SOUTHWEST; break;
+            switch (choice) {
+                case 0:
+                    move_dir = Direction.NORTHEAST;
+                    break;
+                case 1:
+                    move_dir = Direction.NORTHWEST;
+                    break;
+                case 2:
+                    move_dir = Direction.SOUTHEAST;
+                    break;
+                case 3:
+                    move_dir = Direction.SOUTHWEST;
+                    break;
             }
             if (tryMove(move_dir)) {
                 return;
-            } 
+            }
         }
         for (int i = 0; i < 4; i++) {
             int choice = (int) (Math.random() * 4);
-            switch(choice){
-                case 0: move_dir=Direction.NORTH; break;
-                case 1: move_dir=Direction.WEST; break;
-                case 2: move_dir=Direction.SOUTH; break;
-                case 3: move_dir=Direction.EAST; break;
+            switch (choice) {
+                case 0:
+                    move_dir = Direction.NORTH;
+                    break;
+                case 1:
+                    move_dir = Direction.WEST;
+                    break;
+                case 2:
+                    move_dir = Direction.SOUTH;
+                    break;
+                case 3:
+                    move_dir = Direction.EAST;
+                    break;
             }
             if (tryMove(move_dir)) {
                 return;
-            } 
+            }
         }
     }
 
@@ -256,6 +325,8 @@ public strictfp class RobotPlayer {
     }
 
     static void runMuckraker() throws GameActionException {
+        if (!rc.isReady())
+            return;
         Team enemy = rc.getTeam().opponent();
         int actionRadius = rc.getType().actionRadiusSquared;
 
@@ -377,8 +448,7 @@ public strictfp class RobotPlayer {
      * @throws GameActionException
      */
     static boolean tryMove(Direction dir) throws GameActionException {
-        System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " "
-                + rc.canMove(dir));
+        System.out.println("I am trying to move " + dir + "; " + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
         if (rc.canMove(dir)) {
             rc.move(dir);
             return true;
