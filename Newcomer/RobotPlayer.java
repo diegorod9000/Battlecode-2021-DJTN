@@ -373,9 +373,9 @@ public strictfp class RobotPlayer {
 
     	for (int i=0; i < 4; i++) {
     		MapLocation check = location.add(dir); // location to be checked
-    		float passability = sensePassability(check); // looking at passability
+    		float passability = rc.sensePassability(check); // looking at passability
 
-    		if (rc.canMove(check)) {
+    		if (rc.canMove(dir)) {
 				if (passability > highestPassability || highestPassability == -1) {
 	    			nextDir = dir;
 	    			highestPassability = passability;
@@ -389,7 +389,7 @@ public strictfp class RobotPlayer {
 		    			// Idea: choose random direction to keep?
 		    			// scala???? idk how to import
 	    			}
-	    		}	
+	    		}
     		}
     		dir = dir.rotateRight(); // check nest direction
     	}
