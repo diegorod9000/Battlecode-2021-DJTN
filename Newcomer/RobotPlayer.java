@@ -341,7 +341,7 @@ public strictfp class RobotPlayer {
 	    	Team teammate = rc.getTeam();
 	    	actionRadius = rc.getType().actionRadiusSquared;
 	    	for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
-				if (robot.type = RobotType.ENLIGHTENMENT_CENTER) {
+				if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
 		    		origin = robot.getLocation();
 				}
 	    	}
@@ -375,20 +375,19 @@ public strictfp class RobotPlayer {
     		MapLocation check = location.add(dir); // location to be checked
     		float passability = sensePassability(check); // looking at passability
 
-    		if (check.canMove()) {
+    		if (rc.canMove(check)) {
 				if (passability > highestPassability || highestPassability == -1) {
 	    			nextDir = dir;
 	    			highestPassability = passability;
 
 	    		} else if (passability == highestPassability) { // break passability ties (currently using distance)
 		    		float nextDist = location.add(nextDir).distanceSquaredTo(origin);
-		    		float dirDist = location.add(dirDist).distanceSquaredTo(origin);
+		    		float dirDist = location.add(dir).distanceSquaredTo(origin);
 
 	    			if (dirDist > nextDist) {
 	    				nextDir = dir;
-	    			
-	    			// Idea: choose random direction to keep?
-	    			// scala???? idk how to import
+		    			// Idea: choose random direction to keep?
+		    			// scala???? idk how to import
 	    			}
 	    		}	
     		}
@@ -398,11 +397,11 @@ public strictfp class RobotPlayer {
 
     	// checking if none of the directions are available (ie approached wall/corner)
     	// unlikely this clause will be entered
-    	if (lowestPassability == null) {
+    	if (highestPassability == -1) {
     		Direction opp = awayFromHome.opposite();
     		Direction leftDir = opp.rotateLeft(), rightDir = opp.rotateRight();
 
-    		if (leftDir.canMove() && rightDir.canMove()) {
+    		if (rc.canMove(leftDir) && rc.canMove(rightDir)) {
 	    		double leftDist = location.add(leftDir).distanceSquaredTo(origin);
 	    		double rightDist = location.add(rightDir).distanceSquaredTo(origin);
 
@@ -411,11 +410,11 @@ public strictfp class RobotPlayer {
 	    		} else {
 	    			nextDir = rightDir;
 	    		}
-    		} else if (leftDir.canMove() && !rightDir.canMove()) {
+    		} else if (rc.canMove(leftDir) && !rc.canMove(rightDir)) {
     			nextDir = leftDir;
-    		} else if (rightDir.canMove() && !leftDir.canMove()) {
+    		} else if (rc.canMove(rightDir) && !rc.canMove(leftDir)) {
     			nextDir = rightDir;
-    		} else if (opp.canMove()) {
+    		} else if (rc.canMove(opp)) {
     			nextDir = opp;
     		} else {
     			nextDir = Direction.CENTER;
