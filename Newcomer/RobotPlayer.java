@@ -338,13 +338,13 @@ public strictfp class RobotPlayer {
         }
 
         if (origin == null) {
-	    Team teammate = rc.getTeam();
-	    int actionRadius = rc.getType().actionRadiusSquared;
-	    for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
-		if (robot.type = RobotType.ENLIGHTENMENT_CENTER) {
-		    origin = robot.getLocation();
-		}
-	    }    	
+	    	Team teammate = rc.getTeam();
+	    	actionRadius = rc.getType().actionRadiusSquared;
+	    	for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
+				if (robot.type = RobotType.ENLIGHTENMENT_CENTER) {
+		    		origin = robot.getLocation();
+				}
+	    	}
         }
 
         // Take a step if Muckraker doesn't find any Politicians to expose
@@ -359,30 +359,30 @@ public strictfp class RobotPlayer {
      *
      * @return desired Direction for next step (nextDir)
      */
-    static void leastResistanceStep() throws GameActionException {
+    static Direction leastResistanceStep() throws GameActionException {
     	// get current direction
     	MapLocation location = rc.getLocation(); // get current location
-    	Direction awayFromHome = location.directionTo(HOME).opposite(); // find direction poiting away from home
+    	Direction awayFromHome = location.directionTo(origin).opposite(); // find direction poiting away from home
     	// need way to keep loc of original enlightenment center ^^ !!
 
 
     	// look in all forward/side (not backward) directions for easiest path
-    	Direction nextDir = new Direction();
-    	double highestPassability = null;
+    	Direction nextDir;
+    	float highestPassability = -1;
     	Direction dir = awayFromHome.rotateLeft().rotateLeft();
 
-    	for (i=0; i < 4; i++) {
+    	for (int i=0; i < 4; i++) {
     		MapLocation check = location.add(dir); // location to be checked
-    		passability = sensePassability(check); // looking at passability
+    		float passability = sensePassability(check); // looking at passability
 
     		if (check.canMove()) {
-				if (passability > highestPassability || highestPassability == null) {
+				if (passability > highestPassability || highestPassability == -1) {
 	    			nextDir = dir;
 	    			highestPassability = passability;
 
 	    		} else if (passability == highestPassability) { // break passability ties (currently using distance)
-		    		double nextDist = location.add(nextDir).distanceSquaredTo(origin);
-		    		double dirDist = location.add(dirDist).distanceSquaredTo(origin);
+		    		float nextDist = location.add(nextDir).distanceSquaredTo(origin);
+		    		float dirDist = location.add(dirDist).distanceSquaredTo(origin);
 
 	    			if (dirDist > nextDist) {
 	    				nextDir = dir;
@@ -402,7 +402,7 @@ public strictfp class RobotPlayer {
     		Direction opp = awayFromHome.opposite();
     		Direction leftDir = opp.rotateLeft(), rightDir = opp.rotateRight();
 
-    		if (leftDir.canMove() & rightDir.canMove()) {
+    		if (leftDir.canMove() && rightDir.canMove()) {
 	    		double leftDist = location.add(leftDir).distanceSquaredTo(origin);
 	    		double rightDist = location.add(rightDir).distanceSquaredTo(origin);
 
@@ -411,9 +411,9 @@ public strictfp class RobotPlayer {
 	    		} else {
 	    			nextDir = rightDir;
 	    		}
-    		} else if (leftDir.canMove() & !rightDir.canMove()) {
+    		} else if (leftDir.canMove() && !rightDir.canMove()) {
     			nextDir = leftDir;
-    		} else if (rightDir.canMove() & !leftDir.canMove()) {
+    		} else if (rightDir.canMove() && !leftDir.canMove()) {
     			nextDir = rightDir;
     		} else if (opp.canMove()) {
     			nextDir = opp;
