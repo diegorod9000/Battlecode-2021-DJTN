@@ -368,12 +368,12 @@ public strictfp class RobotPlayer {
 
     	// look in all forward/side (not backward) directions for easiest path
     	Direction nextDir;
-    	float highestPassability = -1;
+    	double highestPassability = -1;
     	Direction dir = awayFromHome.rotateLeft().rotateLeft();
 
     	for (int i=0; i < 4; i++) {
     		MapLocation check = location.add(dir); // location to be checked
-    		float passability = rc.sensePassability(check); // looking at passability
+    		double passability = rc.sensePassability(check); // looking at passability
 
     		if (rc.canMove(dir)) {
 				if (passability > highestPassability || highestPassability == -1) {
@@ -381,8 +381,8 @@ public strictfp class RobotPlayer {
 	    			highestPassability = passability;
 
 	    		} else if (passability == highestPassability) { // break passability ties (currently using distance)
-		    		float nextDist = location.add(nextDir).distanceSquaredTo(origin);
-		    		float dirDist = location.add(dir).distanceSquaredTo(origin);
+		    		int nextDist = location.add(nextDir).distanceSquaredTo(origin);
+		    		int dirDist = location.add(dir).distanceSquaredTo(origin);
 
 	    			if (dirDist > nextDist) {
 	    				nextDir = dir;
