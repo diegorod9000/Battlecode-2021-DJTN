@@ -367,7 +367,7 @@ public strictfp class RobotPlayer {
 
 
     	// look in all forward/side (not backward) directions for easiest path
-    	Direction nextDir;
+    	Direction nextDir = Direction.CENTER;
     	double highestPassability = -1;
     	Direction dir = awayFromHome.rotateLeft().rotateLeft();
 
