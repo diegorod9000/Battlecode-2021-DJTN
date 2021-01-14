@@ -457,9 +457,9 @@ public strictfp class RobotPlayer {
     }
 
 
-    static Direction currentDirection = null;
-    static Direction altDirection;
-    static boolean stepnum = true;
+    Direction currentDirection = null;
+    Direction altDirection;
+    boolean stepnum = true;
 
     /**
      * Takes a step in a direction until it hits a wall
@@ -467,38 +467,38 @@ public strictfp class RobotPlayer {
      * 
 	 * No return value, takes a step
      */
-    static Direction wallBounce() throws GameActionException {
+    static void wallBounce() throws GameActionException {
     	// Set initial Direction away from E-center
     	if (currentDirection == null) {
     		MapLocation location = rc.getLocation(); // get current location
-    		MapLocation l1 = location.directionTo(origin).opposite();
+    		Direction d1 = location.directionTo(origin).opposite();
 
-    		if (Math.abs(l1.getDeltaX()) + Math.abs(l1.getDeltaY()) == 1) {
-	    		currentDirection = l1; // cardinal direction
-	    		altDirection = l1.rotateRight(); // diagonal direction
+    		if (Math.abs(d1.getDeltaX()) + Math.abs(d1.getDeltaY()) == 1) {
+	    		currentDirection = d1; // cardinal direction
+	    		altDirection = d1.rotateRight(); // diagonal direction
 	    	} else {
-	    		altDirection = l1;
+	    		altDirection = d1;
 	    		currentDirection = l1.rotateRight();
 	    	}
     	}
 
     	// set step alternating step direction
     	Direction stepdir = (stepnum) ? currentDirection : altDirection;
-    	MapLocation stepspot = rc.adjacent(stepdir);
+    	MapLocation stepspot = rc.adjacentLocation(stepdir);
 
     	if (!rc.onTheMap(stepspot)) {
     		if (rc.getDeltaX(currentDirection) == 0) {
-    			currentDirection = Direction(0, -currentDirection.getDeltaY());
-    			altDirection = Direction(altDirection.getDeltaX(), -altDirection.getDeltaY());
+    			currentDirection = Direction[0, -currentDirection.getDeltaY()];
+    			altDirection = Direction[altDirection.getDeltaX(), -altDirection.getDeltaY()];
     		} else {
-    			currentDirection = Direction(-currentDirection.getDeltaX(), 0);
-    			altDirection = Direction(-altDirection.getDeltaX(), altDirection.getDeltaY());
+    			currentDirection = Direction[-currentDirection.getDeltaX(), 0];
+    			altDirection = Direction[-altDirection.getDeltaX(), altDirection.getDeltaY()];
     		}
     		wallBounce();
     	} else if (rc.canMove(stepdir))
     		rc.move(stepspot);
     	else
-    		trymove(randomDirection());
+    		rc.trymove(randomDirection());
 
     	stepnum = !stepnum;
     }
@@ -512,7 +512,7 @@ public strictfp class RobotPlayer {
      *
      * No return value, just moves
      */
-    static Direction leastResistanceStep() throws GameActionException {
+    static void leastResistanceStep() throws GameActionException {
     	// get current direction
     	MapLocation location = rc.getLocation(); // get current location
     	Direction awayFromHome = location.directionTo(origin).opposite(); // find direction poiting away from home
