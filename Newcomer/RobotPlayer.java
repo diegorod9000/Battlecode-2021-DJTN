@@ -62,17 +62,118 @@ public strictfp class RobotPlayer {
         }
     }
 
-    static void runEnlightenmentCenter() throws GameActionException {
-        RobotType toBuild = randomSpawnableRobotType();
-        int influence = 50;
-        for (Direction dir : directions) {
-            if (rc.canBuildRobot(toBuild, dir, influence)) {
-                rc.buildRobot(toBuild, dir, influence);
-            } else {
-                break;
-            }
+
+
+
+
+
+    static Direction findDirection(int num) {
+        int ModEight = (robotCount + num) % 8;
+        Direction direc = Direction.NORTH;
+        switch (ModEight) {
+            case 0:      direc = Direction.NORTH;      break;
+            case 1:      direc = Direction.SOUTH;      break;
+            case 2:      direc = Direction.EAST;       break;
+            case 3:      direc = Direction.WEST;       break;
+            case 4:      direc = Direction.NORTHEAST;  break;
+            case 5:      direc = Direction.SOUTHWEST;  break;
+            case 6:      direc = Direction.NORTHWEST;  break;
+            case 7:      direc = Direction.SOUTHEAST;  break;
+        }
+
+        if (rc.canBuildRobot(RobotType.POLITICIAN, direc, 1)) {
+            return direc;
+        } else {
+            findDirection(++num);
+        }
+        return direc;
+    }
+
+    static void buildAlternating(int influence) throws GameActionException {
+        //builds robots on a 4-round cycle, slanderes are built 2x as much as politicians an muckrakers
+        //direction is automatically north but this can be changed, influence as well
+
+        int roundModFour = robotCount % 4;
+        switch (roundModFour) {
+            case 0:     buildPolitician(influence);     break;
+            case 1:     buildMuckraker(influence);     break;
+            case 2:
+            case 3:     buildSlanderer(influence);     break;
+
         }
     }
+
+    static void buildPolitician(int influence) throws GameActionException {
+        if (rc.canBuildRobot(RobotType.POLITICIAN, findDirection(0), influence)) {
+            rc.buildRobot(RobotType.POLITICIAN, findDirection(0), influence);
+            robotCount++;
+            System.out.println("POLITICIAN built on round " + turnCount);
+        }
+    }
+
+    static void buildSlanderer(int influence) throws GameActionException {
+        if (rc.canBuildRobot(RobotType.SLANDERER, findDirection(0), influence)) {
+            rc.buildRobot(RobotType.SLANDERER, findDirection(0), influence);
+            robotCount++;
+            System.out.println("SLANDERER built on round " + turnCount);
+        }
+    }
+
+    static void buildMuckraker(int influence) throws GameActionException {
+        if (rc.canBuildRobot(RobotType.MUCKRAKER, findDirection(0), influence)) {
+            rc.buildRobot(RobotType.MUCKRAKER, findDirection(0), influence);
+            robotCount++;
+            System.out.println("MUCKRAKER built on round " + turnCount);
+        }
+    }
+
+    static void bidPercent(double percent) throws GameActionException {
+        //bid a certain percent of the center's influence
+
+        int biddingInfluence = (int)(Math.round(rc.getInfluence() * percent));
+
+        if (rc.canBid(Math.round(biddingInfluence))) {
+            rc.bid(Math.round(biddingInfluence));
+        }
+    }
+
+    static double calcQuadBidPercent() {
+        //function that determines percent of influence used to bid, based on round number
+        //quadratic, starts low and ends higher, starts at 20% and ends at 50%
+
+        return (1.0/450000 * Math.pow(turnCount, 2) - 1.0/300 * turnCount + 20) / 100.0;
+    }
+
+    static double calcLinearBuildPercent() {
+        //function that determines percent of influence used to build robots, based on round number
+        //quadratic, starts high and ends low, starts at 50% and ends at 30%
+
+        return (-1.0/150 * turnCount + 50) / 100.0;
+    }
+
+
+    static int robotCount;
+
+    static void runEnlightenmentCenter() throws GameActionException {
+        //building
+        if (rc.senseNearbyRobots(40, rc.getTeam().opponent()).length > 4) {
+            //builds politicians if there are lots of opponents nearby.
+            buildPolitician((int)(Math.round(rc.getInfluence() * calcLinearBuildPercent())));
+        } else {
+            buildAlternating((int)(Math.round(rc.getInfluence() * calcLinearBuildPercent())));
+        }
+
+        //bidding
+        if (turnCount % 3 == 0) {
+            if (rc.canBid(1)) {
+                rc.bid(1);
+            }
+        } else {
+            bidPercent(calcQuadBidPercent());
+        }
+    }
+
+
 
     //Politician AI
     static void runPolitician() throws GameActionException {
