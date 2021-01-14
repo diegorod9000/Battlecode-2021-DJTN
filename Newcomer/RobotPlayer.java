@@ -448,9 +448,9 @@ public strictfp class RobotPlayer {
 	    	Team teammate = rc.getTeam();
 	    	actionRadius = rc.getType().actionRadiusSquared;
 	    	for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
-				if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
-		    		origin = robot.getLocation();
-				}
+			if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
+		    	    origin = robot.getLocation();
+			}
 	    	}
         }
 
