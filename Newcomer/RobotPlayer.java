@@ -488,15 +488,15 @@ public strictfp class RobotPlayer {
 
     	if (!rc.onTheMap(stepspot))
     		if (rc.getDeltaX(currentDirection) == 0) {
-    			currentDirection = Direction(0, -currentDirection.getDeltaY())
-    			altDirection = Direction(altDirection.getDeltaX(), -altDirection.getDeltaY())
+    			currentDirection = Direction(0, -currentDirection.getDeltaY());
+    			altDirection = Direction(altDirection.getDeltaX(), -altDirection.getDeltaY());
     		} else {
-    			currentDirection = Direction(-currentDirection.getDeltaX(), 0)
-    			altDirection = Direction(-altDirection.getDeltaX(), altDirection.getDeltaY())
+    			currentDirection = Direction(-currentDirection.getDeltaX(), 0);
+    			altDirection = Direction(-altDirection.getDeltaX(), altDirection.getDeltaY());
     		}
     		wallBounce();
     	else if (rc.canMove(stepdir))
-    		rc.move(stepspot)
+    		rc.move(stepspot);
     	else
     		trymove(randomDirection());
 
