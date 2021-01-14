@@ -11,7 +11,6 @@ public strictfp class RobotPlayer {
             Direction.SOUTH, Direction.SOUTHWEST, Direction.WEST, Direction.NORTHWEST, };
 
     static int turnCount;
-    static MapLocation origin = null;
 
     /**
      * run() is the method that is called when a robot is instantiated in the
@@ -448,20 +447,70 @@ public strictfp class RobotPlayer {
 	    	Team teammate = rc.getTeam();
 	    	actionRadius = rc.getType().actionRadiusSquared;
 	    	for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
-			if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
+				if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
 		    	    origin = robot.getLocation();
-			}
+				}
 	    	}
         }
 
-        rc.move(leastResistanceStep());
+        wallBounce();
     }
+
+
+    static Direction currentDirection = null;
+    static Direction altDirection;
+    static boolean stepnum = true;
+
+    /**
+     * Takes a step in a direction until it hits a wall
+     * Made for Muckrakers
+     * 
+	 * No return value, takes a step
+     */
+    static Direction wallBounce() throws GameActionException {
+    	// Set initial Direction away from E-center
+    	if (currentDirection == null) {
+    		MapLocation location = rc.getLocation(); // get current location
+    		MapLocation l1 = location.directionTo(origin).opposite();
+
+    		if (Math.abs(l1.getDeltaX()) + Math.abs(l1.getDeltaY()) == 1) {
+	    		currentDirection = l1; // cardinal direction
+	    		altDirection = l1.rotateRight(); // diagonal direction
+	    	} else {
+	    		altDirection = l1;
+	    		currentDirection = l1.rotateRight();
+	    	}
+    	}
+
+    	// set step alternating step direction
+    	Direction stepdir = (stepnum) ? currentDirection : altDirection;
+    	MapLocation stepspot = rc.adjacent(stepdir);
+
+    	if (!rc.onTheMap(stepspot))
+    		if (rc.getDeltaX(currentDirection) == 0) {
+    			currentDirection = Direction(0, -currentDirection.getDeltaY())
+    			altDirection = Direction(altDirection.getDeltaX(), -altDirection.getDeltaY())
+    		} else {
+    			currentDirection = Direction(-currentDirection.getDeltaX(), 0)
+    			altDirection = Direction(-altDirection.getDeltaX(), altDirection.getDeltaY())
+    		}
+    		wallBounce();
+    	else if (rc.canMove(stepdir))
+    		rc.move(stepspot)
+    	else
+    		trymove(randomDirection());
+
+    	stepnum = !stepnum;
+    }
+
+
+    static MapLocation origin = null;
     
     /**
      * Takes a step in the direction with the highest passability
      * Made specifically for Muckrakers, as it deliberately moves away from home (if keeping a home stat is possible??)
      *
-     * @return desired Direction for next step (nextDir)
+     * No return value, just moves
      */
     static Direction leastResistanceStep() throws GameActionException {
     	// get current direction
@@ -525,7 +574,7 @@ public strictfp class RobotPlayer {
     		}
     	}
 
-    	return nextDir;
+    	rc.move(nextDir);
     }
 
     /**
