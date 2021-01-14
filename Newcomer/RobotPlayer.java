@@ -457,9 +457,14 @@ public strictfp class RobotPlayer {
     }
 
 
-    Direction currentDirection = null;
-    Direction altDirection;
-    boolean stepnum = true;
+    static Direction currentDirection = null;
+    static Direction altDirection;
+    static boolean stepnum = true;
+
+    static Direction getDirection(int dx, int dy) throws GameActionException{
+    	MapLocation l1 = rc.getLocation();
+    	return l1.directionTo(l1.translate(dx, dy));
+    }
 
     /**
      * Takes a step in a direction until it hits a wall
@@ -478,7 +483,7 @@ public strictfp class RobotPlayer {
 	    		altDirection = d1.rotateRight(); // diagonal direction
 	    	} else {
 	    		altDirection = d1;
-	    		currentDirection = l1.rotateRight();
+	    		currentDirection = d1.rotateRight();
 	    	}
     	}
 
@@ -487,18 +492,18 @@ public strictfp class RobotPlayer {
     	MapLocation stepspot = rc.adjacentLocation(stepdir);
 
     	if (!rc.onTheMap(stepspot)) {
-    		if (rc.getDeltaX(currentDirection) == 0) {
-    			currentDirection = Direction[0, -currentDirection.getDeltaY()];
-    			altDirection = Direction[altDirection.getDeltaX(), -altDirection.getDeltaY()];
+    		if (currentDirection.getDeltaX() == 0) {
+    			currentDirection = getDirection(0, -currentDirection.getDeltaY());
+    			altDirection = getDirection(altDirection.getDeltaX(), -altDirection.getDeltaY());
     		} else {
-    			currentDirection = Direction[-currentDirection.getDeltaX(), 0];
-    			altDirection = Direction[-altDirection.getDeltaX(), altDirection.getDeltaY()];
+    			currentDirection = getDirection(-currentDirection.getDeltaX(), 0);
+    			altDirection = getDirection(-altDirection.getDeltaX(), altDirection.getDeltaY());
     		}
     		wallBounce();
     	} else if (rc.canMove(stepdir))
-    		rc.move(stepspot);
+    		rc.move(stepdir);
     	else
-    		rc.trymove(randomDirection());
+    		tryMove(randomDirection());
 
     	stepnum = !stepnum;
     }
