@@ -445,7 +445,7 @@ public strictfp class RobotPlayer {
 	    	}
         }
 
-        leastResistanceStep();
+        rc.move(leastResistanceStep());
     }
     
     /**
