@@ -486,7 +486,7 @@ public strictfp class RobotPlayer {
     	Direction stepdir = (stepnum) ? currentDirection : altDirection;
     	MapLocation stepspot = rc.adjacent(stepdir);
 
-    	if (!rc.onTheMap(stepspot))
+    	if (!rc.onTheMap(stepspot)) {
     		if (rc.getDeltaX(currentDirection) == 0) {
     			currentDirection = Direction(0, -currentDirection.getDeltaY());
     			altDirection = Direction(altDirection.getDeltaX(), -altDirection.getDeltaY());
@@ -495,7 +495,7 @@ public strictfp class RobotPlayer {
     			altDirection = Direction(-altDirection.getDeltaX(), altDirection.getDeltaY());
     		}
     		wallBounce();
-    	else if (rc.canMove(stepdir))
+    	} else if (rc.canMove(stepdir))
     		rc.move(stepspot);
     	else
     		trymove(randomDirection());
