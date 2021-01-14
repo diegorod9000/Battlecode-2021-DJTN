@@ -424,12 +424,9 @@ public strictfp class RobotPlayer {
         Team enemy = rc.getTeam().opponent();
         int actionRadius = rc.getType().actionRadiusSquared;
 
-        boolean enemyNotDetected = true;
-
         for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, enemy)) {
             if (robot.type.canBeExposed()) {
                 // It's a slanderer... go get them!
-                enemyNotDetected = false;
                 if (rc.canExpose(robot.location)) {
                     System.out.println("e x p o s e d");
                     rc.expose(robot.location);
@@ -448,10 +445,7 @@ public strictfp class RobotPlayer {
 	    	}
         }
 
-        // Take a step if Muckraker doesn't find any Politicians to expose
-        if (enemyNotDetected) { // Does this need to be (enemyNotDetected == true)??? fuck java
-        	leastResistanceStep();
-        }
+        leastResistanceStep();
     }
     
     /**
