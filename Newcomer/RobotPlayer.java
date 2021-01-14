@@ -68,9 +68,10 @@ public strictfp class RobotPlayer {
 
 
     static Direction findDirection(int num) {
-        int ModEight = (robotCount + num) % 8;
+        if(num>8)
+            return null;
         Direction direc = Direction.NORTH;
-        switch (ModEight) {
+        switch (num) {
             case 0:      direc = Direction.NORTH;      break;
             case 1:      direc = Direction.SOUTH;      break;
             case 2:      direc = Direction.EAST;       break;
@@ -83,10 +84,8 @@ public strictfp class RobotPlayer {
 
         if (rc.canBuildRobot(RobotType.POLITICIAN, direc, 1)) {
             return direc;
-        } else {
-            findDirection(++num);
-        }
-        return direc;
+        } 
+        return findDirection(++num);
     }
 
     static void buildAlternating(int influence) throws GameActionException {
@@ -104,24 +103,34 @@ public strictfp class RobotPlayer {
     }
 
     static void buildPolitician(int influence) throws GameActionException {
-        if (rc.canBuildRobot(RobotType.POLITICIAN, findDirection(0), influence)) {
-            rc.buildRobot(RobotType.POLITICIAN, findDirection(0), influence);
+        Direction direc=findDirection(0);
+        if(direc==null)
+            return;
+        if (rc.canBuildRobot(RobotType.POLITICIAN, direc, influence)) {
+            System.out.println(influence);
+            rc.buildRobot(RobotType.POLITICIAN, direc, influence);
             robotCount++;
             System.out.println("POLITICIAN built on round " + turnCount);
         }
     }
 
     static void buildSlanderer(int influence) throws GameActionException {
-        if (rc.canBuildRobot(RobotType.SLANDERER, findDirection(0), influence)) {
-            rc.buildRobot(RobotType.SLANDERER, findDirection(0), influence);
+        Direction direc=findDirection(0);
+        if(direc==null)
+            return;
+        if (rc.canBuildRobot(RobotType.SLANDERER, direc, influence)) {
+            rc.buildRobot(RobotType.SLANDERER, direc, influence);
             robotCount++;
             System.out.println("SLANDERER built on round " + turnCount);
         }
     }
 
     static void buildMuckraker(int influence) throws GameActionException {
-        if (rc.canBuildRobot(RobotType.MUCKRAKER, findDirection(0), influence)) {
-            rc.buildRobot(RobotType.MUCKRAKER, findDirection(0), influence);
+        Direction direc=findDirection(0);
+        if(direc==null)
+            return;
+        if (rc.canBuildRobot(RobotType.MUCKRAKER, direc, influence)) {
+            rc.buildRobot(RobotType.MUCKRAKER, direc, influence);
             robotCount++;
             System.out.println("MUCKRAKER built on round " + turnCount);
         }
