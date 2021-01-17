@@ -252,6 +252,9 @@ public strictfp class RobotPlayer {
 
     // Slanderer AI
     static void runSlanderer() throws GameActionException {
+        if (!rc.isReady()) {
+            return;
+        }
         // detect if an enemy is within range
         Team enemy = rc.getTeam().opponent();
         int detectionRadius = rc.getType().detectionRadiusSquared;
@@ -265,51 +268,78 @@ public strictfp class RobotPlayer {
 
     // Makes the robot move randomly, with a priority for diagonals
     static void scatter() throws GameActionException {
-        Direction move_dir = Direction.NORTH;
-        for (int i = 0; i < 4; i++) {
+        Direction diag = null;
+        Direction straight = null;
+        int overflow=0;
+        while(diag==null && overflow<5){
+            overflow++;
             int choice = (int) (Math.random() * 4);
             switch (choice) {
                 case 0:
-                    move_dir = Direction.NORTHEAST;
+                    if(rc.canMove(Direction.NORTHEAST))
+                        diag = Direction.NORTHEAST;
                     break;
                 case 1:
-                    move_dir = Direction.NORTHWEST;
+                    if(rc.canMove(Direction.NORTHWEST))
+                        diag = Direction.NORTHWEST;
                     break;
                 case 2:
-                    move_dir = Direction.SOUTHEAST;
+                    if(rc.canMove(Direction.SOUTHEAST))
+                        diag = Direction.SOUTHEAST;
                     break;
                 case 3:
-                    move_dir = Direction.SOUTHWEST;
+                    if(rc.canMove(Direction.SOUTHEAST))
+                        diag = Direction.SOUTHWEST;
                     break;
             }
-            if (tryMove(move_dir)) {
-                return;
-            }
         }
-        for (int i = 0; i < 4; i++) {
+        overflow=0;
+        while(straight==null && overflow<5){
+            overflow++;
             int choice = (int) (Math.random() * 4);
             switch (choice) {
                 case 0:
-                    move_dir = Direction.NORTH;
+                    if(rc.canMove(Direction.NORTH))
+                        straight = Direction.NORTH;
                     break;
                 case 1:
-                    move_dir = Direction.WEST;
+                    if(rc.canMove(Direction.WEST))
+                        straight = Direction.WEST;
                     break;
                 case 2:
-                    move_dir = Direction.SOUTH;
+                    if(rc.canMove(Direction.EAST))
+                        straight = Direction.EAST;
                     break;
                 case 3:
-                    move_dir = Direction.EAST;
+                    if(rc.canMove(Direction.SOUTH))
+                        straight = Direction.SOUTH;
                     break;
             }
-            if (tryMove(move_dir)) {
+        }
+        if(diag==null)
+            if(straight==null)
                 return;
+            else
+                rc.move(straight);
+        else if(straight==null)
+            rc.move(diag);
+        else{
+            MapLocation position=rc.getLocation();
+            MapLocation diagPath=position.add(diag);
+            MapLocation strPath=position.add(straight);
+            if(rc.sensePassability(diagPath)<(rc.sensePassability(strPath)/1.3)){
+                rc.move(straight);
+            }
+            else {
+                rc.move(diag);
             }
         }
+        
     }
 
     // Makes the robot run away from threats
-    static void flee(int detectionRadius, RobotInfo[] threat) throws GameActionException {
+    static void flee(int detectionRadius, RobotInfo[] threat) throws GameActionException 
+    {
         MapLocation spot = rc.getLocation();
         System.out.println("Threat Detected!");
         int xPos = spot.x;
@@ -332,97 +362,142 @@ public strictfp class RobotPlayer {
                 yPriority += (detectionRadius - threatY + 1);
             }
         }
-
+        Direction[] paths;
         if (xPriority == 0) {
             if (yPriority == 0) {
                 tryMove(Direction.NORTH);
                 return;
+            } else if (yPriority > 0) {
+                paths= new Direction[]{Direction.SOUTHEAST,Direction.SOUTHWEST,Direction.SOUTH,Direction.EAST,Direction.WEST};
+            } else {
+                paths=new Direction[]{Direction.NORTHEAST,Direction.NORTHWEST,Direction.NORTH,Direction.EAST,Direction.WEST};
             }
-            if (yPriority > 0) {
-                if (tryMove(Direction.SOUTHWEST))
-                    return;
-                if (tryMove(Direction.SOUTHEAST))
-                    return;
-                if (tryMove(Direction.SOUTH))
-                    return;
-                if (tryMove(Direction.EAST))
-                    return;
-                if (tryMove(Direction.WEST))
-                    return;
+        } else if (xPriority > 0) {
+            if (yPriority == 0) {
+                paths=new Direction[]{Direction.NORTHWEST,Direction.SOUTHWEST,Direction.WEST,Direction.NORTH,Direction.SOUTH};
+            } else if (yPriority > 0) {
+                paths=new Direction[]{Direction.SOUTHWEST,Direction.SOUTH,Direction.WEST};
+            } else {
+                paths=new Direction[]{Direction.NORTHWEST,Direction.NORTH,Direction.WEST};
             }
-            if (yPriority < 0) {
-                if (tryMove(Direction.NORTHWEST))
-                    return;
-                if (tryMove(Direction.NORTHEAST))
-                    return;
-                if (tryMove(Direction.NORTH))
-                    return;
-                if (tryMove(Direction.EAST))
-                    return;
-                if (tryMove(Direction.WEST))
-                    return;
+        } else {
+            if (yPriority == 0) {
+                paths=new Direction[]{Direction.NORTHEAST,Direction.SOUTHEAST,Direction.EAST,Direction.NORTH,Direction.SOUTH};
+            } else if (yPriority > 0) {
+                paths=new Direction[]{Direction.SOUTHEAST,Direction.SOUTH,Direction.EAST};
+            } else {
+                paths=new Direction[]{Direction.NORTHEAST,Direction.NORTH,Direction.EAST};
             }
         }
+        MapLocation position = rc.getLocation();
+        if (paths.length == 5) {
+            double diag = 0;
+            int diagTracker=-1;
+            double away = 0;
+            double side = 0;
+            int sideTracker=-1;
 
-        if (xPriority > 0) {
-            if (yPriority == 0) {
-                if (tryMove(Direction.NORTHWEST))
-                    return;
-                if (tryMove(Direction.SOUTHWEST))
-                    return;
-                if (tryMove(Direction.WEST))
-                    return;
-                if (tryMove(Direction.NORTH))
-                    return;
-                if (tryMove(Direction.SOUTH))
-                    return;
+            if (rc.canMove(paths[2])) {
+                away = rc.sensePassability(position.add(paths[2]));
             }
-            if (yPriority > 0) {
-                if (tryMove(Direction.SOUTHWEST))
-                    return;
-                if (tryMove(Direction.SOUTH))
-                    return;
-                if (tryMove(Direction.WEST))
-                    return;
+            if (rc.canMove(paths[0])) {
+                if (rc.canMove(paths[1])) {
+                    double pass1=rc.sensePassability(position.add(paths[0]));
+                    double pass2=rc.sensePassability(position.add(paths[1]));
+                    if(pass1>pass2){
+                        diag=pass1;
+                        diagTracker=0;
+                    }
+                    else{
+                        diag=pass2;
+                        diagTracker=1;
+                    }
+                }
+                else{
+                    diag = rc.sensePassability(position.add(paths[0]));
+                    diagTracker = 0;
+                }
             }
-            if (yPriority < 0) {
-                if (tryMove(Direction.NORTHWEST))
-                    return;
-                if (tryMove(Direction.NORTH))
-                    return;
-                if (tryMove(Direction.WEST))
-                    return;
+            else if(rc.canMove(paths[1])){
+                diag = rc.sensePassability(position.add(paths[1]));
+                diagTracker=1;
             }
-        }
-        if (xPriority < 0) {
-            if (yPriority == 0) {
-                if (tryMove(Direction.NORTHEAST))
-                    return;
-                if (tryMove(Direction.SOUTHEAST))
-                    return;
-                if (tryMove(Direction.EAST))
-                    return;
-                if (tryMove(Direction.NORTH))
-                    return;
-                if (tryMove(Direction.SOUTH))
-                    return;
+
+            if (rc.canMove(paths[3])) {
+                if (rc.canMove(paths[4])) {
+                    double pass1=rc.sensePassability(position.add(paths[3]));
+                    double pass2=rc.sensePassability(position.add(paths[4]));
+                    if(pass1>pass2){
+                        side=pass1;
+                        sideTracker=3;
+                    }
+                    else{
+                        side=pass2;
+                        sideTracker=4;
+                    }
+                }
+                else{
+                    side = rc.sensePassability(position.add(paths[3]));
+                    sideTracker = 3;
+                }
             }
-            if (yPriority > 0) {
-                if (tryMove(Direction.SOUTHEAST))
-                    return;
-                if (tryMove(Direction.SOUTH))
-                    return;
-                if (tryMove(Direction.EAST))
-                    return;
+            else if(rc.canMove(paths[4])){
+                side = rc.sensePassability(position.add(paths[4]));
+                sideTracker=4;
             }
-            if (yPriority < 0) {
-                if (tryMove(Direction.NORTHEAST))
-                    return;
-                if (tryMove(Direction.NORTH))
-                    return;
-                if (tryMove(Direction.EAST))
-                    return;
+
+            if(diag<away/1.3&&away>0){
+                if(away<side/1.4){
+                    rc.move(paths[sideTracker]);
+                }
+                else{
+                    rc.move(paths[2]);
+                }
             }
+            else if(diag<side/2.0&&side>0){
+                rc.move(paths[sideTracker]);
+            }
+            else if(diag>0){
+                rc.move(paths[diagTracker]);
+            }
+        } 
+        else {
+            double diag = 0;
+            double straight = 0;
+            int straightTracker = -1;
+            if (rc.canMove(paths[0])) {
+                diag = rc.sensePassability(position.add(paths[0]));
+            }
+            if (rc.canMove(paths[1])) {
+                if (rc.canMove(paths[2])) {
+                    double pass1=rc.sensePassability(position.add(paths[1]));
+                    double pass2=rc.sensePassability(position.add(paths[2]));
+                    if(pass1>pass2){
+                        straight=pass1;
+                        straightTracker=1;
+                    }
+                    else{
+                        straight=pass2;
+                        straightTracker=2;
+                    }
+                }
+                else{
+                    straight = rc.sensePassability(position.add(paths[1]));
+                    straightTracker = 1;
+                }
+            }
+            else if(rc.canMove(paths[2])){
+                straight = rc.sensePassability(position.add(paths[2]));
+                straightTracker=2;
+            }
+
+            
+            if (diag<straight/1.3&&straightTracker>0) {
+                rc.move(paths[straightTracker]);
+            }else if(diag>0){
+                rc.move(paths[0]);
+            }
+            
         }
     }
 
