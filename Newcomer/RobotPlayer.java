@@ -571,12 +571,13 @@ public strictfp class RobotPlayer {
     	MapLocation stepspot = rc.adjacentLocation(stepdir);
 
     	if (!rc.onTheMap(stepspot)) {
+    		int ax = altDirection.getDeltaX(), ay = altDirection.getDeltaY();
     		if (currentDirection.getDeltaX() == 0) {
-    			currentDirection = getDirection(0, -currentDirection.getDeltaY());
-    			altDirection = getDirection(altDirection.getDeltaX(), -altDirection.getDeltaY());
+    			currentDirection = currentDirection.opposite();
+    			altDirection = getDirection(ax, -ay);
     		} else {
-    			currentDirection = getDirection(-currentDirection.getDeltaX(), 0);
-    			altDirection = getDirection(-altDirection.getDeltaX(), altDirection.getDeltaY());
+    			currentDirection = currentDirection.opposite();
+    			altDirection = getDirection(-ax, ay);
     		}
     	}
 
