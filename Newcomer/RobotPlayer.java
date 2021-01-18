@@ -187,7 +187,7 @@ public strictfp class RobotPlayer {
             if (rc.canBid(1)) {
                 rc.bid(1);
             }
-        } else if (turnCount == GAME_MAX_NUMBER_OF_ROUNDS - 1) {
+        } else if (turnCount == GameConstants.GAME_MAX_NUMBER_OF_ROUNDS - 1) {
             rc.bid(rc.getInfluence());
         } else {
             bidPercent(calcQuadBidPercent());
