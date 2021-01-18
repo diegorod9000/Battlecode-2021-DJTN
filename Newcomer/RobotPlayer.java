@@ -288,7 +288,7 @@ public strictfp class RobotPlayer {
                         diag = Direction.SOUTHEAST;
                     break;
                 case 3:
-                    if(rc.canMove(Direction.SOUTHEAST))
+                    if(rc.canMove(Direction.SOUTHWEST))
                         diag = Direction.SOUTHWEST;
                     break;
             }
@@ -316,13 +316,17 @@ public strictfp class RobotPlayer {
                     break;
             }
         }
-        if(diag==null)
-            if(straight==null)
+        if(diag==null){
+            if(straight==null){
                 return;
-            else
+            }
+            else{
                 rc.move(straight);
-        else if(straight==null)
+            }
+        }
+        else if(straight==null){
             rc.move(diag);
+        }
         else{
             MapLocation position=rc.getLocation();
             MapLocation diagPath=position.add(diag);
