@@ -180,7 +180,63 @@ public strictfp class RobotPlayer {
             bidPercent(calcQuadBidPercent());
         }
     }
+	
+	
+	
+	
+    static void sendMovingFlag() throws GameActionException {
+        //for moving robots if they see an enemy, reports the enemy's location and ID in flag
 
+        RobotInfo[] enemyBotInfo = rc.senseNearbyRobots(20, rc.getTeam().opponent());
+        MapLocation location = new MapLocation(0,0);
+        int intID = 0;
+        boolean found = false;
+        boolean inBounds = true;
+
+        if (enemyBotInfo.length != 0) {
+            //sends flag if there are enemies detected
+
+            for (RobotInfo info: enemyBotInfo) {
+                //if any opponent is an enlightenment center, set ID to 0 or 1023 based on team
+                if (info.getType() == RobotType.ENLIGHTENMENT_CENTER) {
+                    if (info.getTeam() == Team.NEUTRAL) {
+                        intID = 0;
+                    } else {
+                        intID = 1023;
+                    }
+                    location = info.getLocation();
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                //if no center found and if the ID is between 1 and 1022, set ID and location
+                for (RobotInfo info: enemyBotInfo) {
+                    if (info.getID() % 1024 == 0 || info.getID() % 1024 == 1023) {
+                        inBounds = false;
+                    }
+                }
+
+                if (inBounds) {
+                    intID = enemyBotInfo[0].getID() % 1024;
+                    location = enemyBotInfo[0].getLocation();
+                }
+            }
+
+            if (inBounds) {
+                //sends flag if the ID is between 1 and 1022, because 0 and 1023 are for E-Centers
+                int x = location.x, y = location.y;
+                int encodedLocation = ((intID & BITMASK) << 2 * NBITS) + ((x & BITMASK) << NBITS) + (y & BITMASK);
+                if (rc.canSetFlag(encodedLocation)) {
+                    rc.setFlag(encodedLocation);
+                }
+            }
+        }
+    }
+
+	
+	
+	
 
 
     //Politician AI
@@ -507,6 +563,9 @@ public strictfp class RobotPlayer {
     }
 
     static void runMuckraker() throws GameActionException {
+	    
+	sendMovingFlag();
+	
         if (!rc.isReady())
             return;
         Team enemy = rc.getTeam().opponent();
