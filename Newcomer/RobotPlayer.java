@@ -362,6 +362,7 @@ public strictfp class RobotPlayer {
 
     //Politician AI
     static void runPolitician() throws GameActionException {
+	sendMovingFlag()
         //basic variables
         Team enemy = rc.getTeam().opponent();
         int actionRadius = rc.getType().actionRadiusSquared;
@@ -432,6 +433,9 @@ public strictfp class RobotPlayer {
 
     // Slanderer AI
     static void runSlanderer() throws GameActionException {
+	    
+	sendMovingFlag()
+		
         if (!rc.isReady()) {
             return;
         }
