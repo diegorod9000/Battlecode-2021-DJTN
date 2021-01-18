@@ -1,6 +1,7 @@
 package Newcomer;
 
 import battlecode.common.*;
+//import sun.java2d.x11.X11SurfaceDataProxy;
 
 public strictfp class RobotPlayer {
     static RobotController rc;
@@ -11,6 +12,11 @@ public strictfp class RobotPlayer {
             Direction.SOUTH, Direction.SOUTHWEST, Direction.WEST, Direction.NORTHWEST, };
 
     static int turnCount;
+
+    static int homeID = 0;
+    static boolean firstTurn = true;
+
+    static MapLocation targetLoc = null;
 
     /**
      * run() is the method that is called when a robot is instantiated in the
@@ -26,7 +32,9 @@ public strictfp class RobotPlayer {
 
         turnCount = 0;
 
-        // System.out.println("I'm a " + rc.getType() + " and I just got created!");
+         System.out.println("I'm a " + rc.getType() + " and I just got created!");
+
+
         while (true) {
             turnCount += 1;
             // Try/catch blocks stop unhandled exceptions, which cause your robot to freeze
@@ -181,103 +189,213 @@ public strictfp class RobotPlayer {
         }
     }
 	
-	
-	
-	
-  static void sendMovingFlag() throws GameActionException {
-    //for moving robots if they see an enemy, reports the enemy's location and ID in flag
 
-    RobotInfo[] enemyBotInfo = rc.senseNearbyRobots(20, rc.getTeam().opponent());
-    RobotInfo[] neutralBotInfo = rc.senseNearbyRobots(20, Team.NEUTRAL);
-    MapLocation location = new MapLocation(0,0);
-    int intID = 0;
+    static void sendMovingFlag() throws GameActionException {
+        //for moving robots if they see an enemy, reports the enemy's location and ID in flag
 
-    if (enemyBotInfo.length == 0 && neutralBotInfo.length == 0) {
-      return;
-    }
-      //sends no flag if there are no enemies detected
-    for (RobotInfo info: neutralBotInfo) {
-      //if any opponent is an enlightenment center, set ID to 0 or 1023 based on team
-      if (info.getType() == RobotType.ENLIGHTENMENT_CENTER) {
-        intID = 0;
-        location = info.getLocation();
-        int x = location.x, y = location.y;
-        int encodedLocation = ((x & BITMASK) << NBITS) + (y & BITMASK);
-        if (rc.canSetFlag(encodedLocation)) {
-          rc.setFlag(encodedLocation);
-          return;
+        RobotInfo[] enemyBotInfo = rc.senseNearbyRobots(20, rc.getTeam().opponent());
+        MapLocation location = new MapLocation(0,0);
+        int intID = 0;
+        boolean found = false;
+        boolean inBounds = true;
+
+        if (enemyBotInfo.length != 0) {
+            //sends flag if there are enemies detected
+
+            for (RobotInfo info: enemyBotInfo) {
+                //if any opponent is an enlightenment center, set ID to 0 or 1023 based on team
+                if (info.getType() == RobotType.ENLIGHTENMENT_CENTER) {
+                    if (info.getTeam() == Team.NEUTRAL) {
+                        intID = 0;
+                    } else {
+                        intID = 1023;
+                    }
+                    location = info.getLocation();
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                //if no center found and if the ID is between 1 and 1022, set ID and location
+                for (RobotInfo info: enemyBotInfo) {
+                    if (info.getID() % 1024 == 0 || info.getID() % 1024 == 1023) {
+                        inBounds = false;
+                    }
+                }
+
+                if (inBounds) {
+                    intID = enemyBotInfo[0].getID() % 1024;
+                    location = enemyBotInfo[0].getLocation();
+                }
+            }
+
+            if (inBounds) {
+                //sends flag if the ID is between 1 and 1022, because 0 and 1023 are for E-Centers
+                int x = location.x, y = location.y;
+                int encodedLocation = 0;
+                //((intID & BITMASK) << 2 * NBITS) + ((x & BITMASK) << NBITS) + (y & BITMASK);
+                if (rc.canSetFlag(encodedLocation)) {
+                    rc.setFlag(encodedLocation);
+                }
+            }
         }
-      }
     }
 
-    for (RobotInfo info: enemyBotInfo) {
-      //if any opponent is an enlightenment center, set ID to 0 or 1023 based on team
-      if (info.getType() == RobotType.ENLIGHTENMENT_CENTER) {
-        intID = 1023;
-        location = info.getLocation();
-        int x = location.x, y = location.y;
-        int encodedLocation = ((intID & BITMASKID) << 2 * NBITS) + ((x & BITMASK) << NBITS) + (y & BITMASK);
-        if (rc.canSetFlag(encodedLocation)) {
-          rc.setFlag(encodedLocation);
-          return;
+
+    //run at top of code (runs first turn and records id of home EC
+    static void getHomeECID() throws GameActionException{
+        if(!firstTurn){
+            return;
         }
-      }
-    }
+        Team friendly = rc.getTeam();
+        RobotInfo[] nearbyRobots = rc.senseNearbyRobots();
+        RobotInfo nearestEC = null;
 
-    //if no center found and if the ID is between 1 and 1022, set ID and location
-    for (RobotInfo info: enemyBotInfo) {
-      if (info.getID() % 1024 != 0 && info.getID() % 1024 != 1023 && info.getTeam() == rc.getTeam().opponent()) {
-        //sends flag if the ID is between 1 and 1022, because 0 and 1023 are for E-Centers
-        intID = info.getID() % 1024;
-        location = info.getLocation();
-        int x = location.x, y = location.y;
-        int encodedLocation = ((intID & BITMASKID) << 2 * NBITS) + ((x & BITMASK) << NBITS) + (y & BITMASK);
-        if (rc.canSetFlag(encodedLocation)) {
-          rc.setFlag(encodedLocation);
+        System.out.println("Nearby Robots: " + nearbyRobots.length);
+        for(int i = 0; i < nearbyRobots.length;i++){
+            if(nearestEC == null && nearbyRobots[i].getTeam().equals(friendly) && nearbyRobots[i].getType().equals(RobotType.ENLIGHTENMENT_CENTER)){
+                nearestEC = nearbyRobots[i];
+            }
+            else if(nearestEC != null && nearbyRobots[i].getType().equals(RobotType.ENLIGHTENMENT_CENTER)){
+                if(nearbyRobots[i].getLocation().distanceSquaredTo(rc.getLocation()) < nearestEC.getLocation().distanceSquaredTo(rc.getLocation())){
+                    nearestEC = nearbyRobots[i];
+                }
+            }
         }
-      }
-    }
-  }
 
-	
-	
-	
+        firstTurn = false;
+        homeID = nearestEC.getID();
+        System.out.println("My home ID is " + homeID);
+
+    }
+
+    //pathfinding Algorithm to move toward targetLoc variable
+    static void polPathFind() throws GameActionException{
+        Direction targetDir = rc.getLocation().directionTo(targetLoc);
+        Direction[] availDirs = new Direction[3];
+        availDirs[1] = targetDir;
+
+        //get index in directions array
+        int dirIndex = 0;
+        for (int i = 0; i < directions.length;i++){
+            if(directions[i].equals(targetDir)){
+                dirIndex = i;
+            }
+        }
+
+        //fill in adjacent directions
+        if(dirIndex >= 1){
+            availDirs[0] = directions[dirIndex - 1];
+        }else{
+            availDirs[0] = directions[directions.length - 1];
+        }
+
+        if(dirIndex <= directions.length - 2){
+            availDirs[2] = directions[dirIndex + 1];
+        }else{
+            availDirs[2] = directions[0];
+        }
+
+        //find the highest passability amoung possible directions
+        double max = 0.0;
+        Direction bestDir = null;
+        for(int i = 0; i < availDirs.length;i++){
+            double currentPass = rc.sensePassability(rc.getLocation().add(availDirs[i]));
+            if (currentPass > max){
+               bestDir = availDirs[i];
+               max = currentPass;
+            }
+        }
+
+        //if max is <= .1 (all directions have bad passability), move perpendicular
+        if(max <= .1){
+          if(dirIndex >= 2){
+              bestDir = directions[dirIndex-2];
+          }
+          else if (dirIndex == 1){
+              bestDir = directions[directions.length-1];
+          }
+          else{
+              bestDir = directions[directions.length-2];
+          }
+        }
+
+        //move in that direction
+        if(rc.canMove(bestDir)){
+            rc.move(bestDir);
+        }
+
+    }
+
+    //detects if on a mission, if not checks home flag
+    static boolean onMission() throws GameActionException{
+        if (targetLoc == null){
+            polCheckHomeFlag();
+            if(targetLoc == null){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    //checks if arrived at target, if so empowers and then ends mission (targetLoc = null)
+    static boolean arrived(int actionRadius) throws GameActionException{
+        if(rc.getLocation().distanceSquaredTo(targetLoc) < actionRadius){
+            if(rc.canEmpower(actionRadius)){
+                rc.empower(actionRadius);
+                targetLoc = null;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //checks home flag and gets any relevant information from it
+    static void polCheckHomeFlag() throws GameActionException{
+        //System.out.println("Home ID:" + homeID);
+        int flag = rc.getFlag(homeID);
+
+        //IMPLEMENT CODE TO GET FLAG INFORMATION
+
+    }
 
 
     //Politician AI
     static void runPolitician() throws GameActionException {
+        //basic variables
         Team enemy = rc.getTeam().opponent();
         int actionRadius = rc.getType().actionRadiusSquared;
         MapLocation[] enemies = rc.detectNearbyRobots();
-        for (int i = 0; i < enemies.length;i++){
-            continue;
+
+        //only runs on the first turn
+        getHomeECID();
+
+        //checks if on mission
+        if (onMission() && !arrived(actionRadius)){
+            polPathFind();
+            return;
         }
+
         boolean winning = true;
 
-        if (rc.isReady()){
-        }
+
         RobotInfo[] attackable = rc.senseNearbyRobots(actionRadius, enemy);
-        RobotInfo[] nuetralECs = rc.senseNearbyRobots(actionRadius);
-        boolean nearNeutralEC = false;
-        for (int i = 0; i < nuetralECs.length; i++) {
-            //System.out.println("Near " + nuetralECs[i].getType().toString());
-            if (nuetralECs[i].getType().equals(RobotType.ENLIGHTENMENT_CENTER) && rc.canEmpower(actionRadius)) {
-                // System.out.println("Near Enlightenment Center with team" + nuetralECs[i].getTeam().toString() + " with conviction " + nuetralECs[i].getConviction());
-                if (nuetralECs[i].getTeam().equals(rc.getTeam().opponent())){
-                    // System.out.println("yes");
-                    rc.empower(actionRadius);
-                    // System.out.println("Attacking Enlightenment Center");
-                    return;
-                }
+        RobotInfo[] nuetralECs = rc.senseNearbyRobots(actionRadius, Team.NEUTRAL);
+
+        if(nuetralECs.length != 0){
+            if(rc.canEmpower(actionRadius)){
+                rc.empower(actionRadius);
+                System.out.println("Empowering near Neutral Enlightenment Center");
             }
         }
+
 //        System.out.println("" + rc.getTeamVotes() + " " + rc.getRoundNum());
         double score = rc.getTeamVotes() / rc.getRoundNum();
         if (score >= .3) {
             if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
                 // System.out.println("empowering...");
                 rc.empower(actionRadius);
-                // System.out.println("empowered");
+                System.out.println("empowered");
                 return;
             }
 
