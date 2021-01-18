@@ -17,6 +17,7 @@ public strictfp class RobotPlayer {
     static boolean firstTurn = true;
 
     static MapLocation targetLoc = null;
+    static MapLocation origin = null;
 
     /**
      * run() is the method that is called when a robot is instantiated in the
@@ -32,7 +33,7 @@ public strictfp class RobotPlayer {
 
         turnCount = 0;
 
-         System.out.println("I'm a " + rc.getType() + " and I just got created!");
+        System.out.println("I'm a " + rc.getType() + " and I just got created!");
 
 
         while (true) {
@@ -91,7 +92,7 @@ public strictfp class RobotPlayer {
 
         if (rc.canBuildRobot(RobotType.POLITICIAN, direc, 1)) {
             return direc;
-        } 
+        }
         return findDirection(++num);
     }
 
@@ -99,12 +100,12 @@ public strictfp class RobotPlayer {
         //builds robots on a 4-round cycle, slanderes are built 2x as much as politicians an muckrakers
         //direction is automatically north but this can be changed, influence as well
 
-        int roundMod = robotCount % 12;
+        int roundMod = turnCount % 12;
         switch (roundMod) {
             case 0:     buildSlanderer(influence);     break;
             case 2:     buildMuckraker(influence / 2);     break;
             case 6:
-            case 10:     buildPolitician(influence * 1.5);     break;
+            case 10:     buildPolitician(influence * 3/2);     break;
 
         }
     }
@@ -188,7 +189,7 @@ public strictfp class RobotPlayer {
             bidPercent(calcQuadBidPercent());
         }
     }
-	
+
 
     static void sendMovingFlag() throws GameActionException {
         //for moving robots if they see an enemy, reports the enemy's location and ID in flag
@@ -302,22 +303,22 @@ public strictfp class RobotPlayer {
         for(int i = 0; i < availDirs.length;i++){
             double currentPass = rc.sensePassability(rc.getLocation().add(availDirs[i]));
             if (currentPass > max){
-               bestDir = availDirs[i];
-               max = currentPass;
+                bestDir = availDirs[i];
+                max = currentPass;
             }
         }
 
         //if max is <= .1 (all directions have bad passability), move perpendicular
         if(max <= .1){
-          if(dirIndex >= 2){
-              bestDir = directions[dirIndex-2];
-          }
-          else if (dirIndex == 1){
-              bestDir = directions[directions.length-1];
-          }
-          else{
-              bestDir = directions[directions.length-2];
-          }
+            if(dirIndex >= 2){
+                bestDir = directions[dirIndex-2];
+            }
+            else if (dirIndex == 1){
+                bestDir = directions[directions.length-1];
+            }
+            else{
+                bestDir = directions[directions.length-2];
+            }
         }
 
         //move in that direction
@@ -362,7 +363,7 @@ public strictfp class RobotPlayer {
 
     //Politician AI
     static void runPolitician() throws GameActionException {
-	sendMovingFlag()
+        sendMovingFlag();
         //basic variables
         Team enemy = rc.getTeam().opponent();
         int actionRadius = rc.getType().actionRadiusSquared;
@@ -391,7 +392,7 @@ public strictfp class RobotPlayer {
         }
 
 //        System.out.println("" + rc.getTeamVotes() + " " + rc.getRoundNum());
-	double rand = Math.random();
+        double rand = Math.random();
         if (rand <= .1) {
             if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
                 // System.out.println("empowering...");
@@ -433,9 +434,9 @@ public strictfp class RobotPlayer {
 
     // Slanderer AI
     static void runSlanderer() throws GameActionException {
-	    
-	sendMovingFlag()
-		
+
+        sendMovingFlag();
+
         if (!rc.isReady()) {
             return;
         }
@@ -522,11 +523,11 @@ public strictfp class RobotPlayer {
                 rc.move(diag);
             }
         }
-        
+
     }
 
     // Makes the robot run away from threats
-    static void flee(int detectionRadius, RobotInfo[] threat) throws GameActionException 
+    static void flee(int detectionRadius, RobotInfo[] threat) throws GameActionException
     {
         MapLocation spot = rc.getLocation();
         // System.out.println("Threat Detected!");
@@ -648,7 +649,7 @@ public strictfp class RobotPlayer {
             else if(diag>0){
                 rc.move(paths[diagTracker]);
             }
-        } 
+        }
         else {
             double diag = 0;
             double straight = 0;
@@ -679,20 +680,22 @@ public strictfp class RobotPlayer {
                 straightTracker=2;
             }
 
-            
+
             if (diag<straight/1.3&&straightTracker>0) {
                 rc.move(paths[straightTracker]);
             }else if(diag>0){
                 rc.move(paths[0]);
             }
-            
+
         }
     }
 
+
+
     static void runMuckraker() throws GameActionException {
-	    
-	sendMovingFlag();
-	
+
+        sendMovingFlag();
+
         if (!rc.isReady())
             return;
         Team enemy = rc.getTeam().opponent();
@@ -710,13 +713,13 @@ public strictfp class RobotPlayer {
         }
 
         if (origin == null) {
-	    	Team teammate = rc.getTeam();
-	    	actionRadius = rc.getType().actionRadiusSquared;
-	    	for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
-				if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
-		    	    origin = robot.getLocation();
-				}
-	    	}
+            Team teammate = rc.getTeam();
+            actionRadius = rc.getType().actionRadiusSquared;
+            for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
+                if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
+                    origin = robot.getLocation();
+                }
+            }
         }
 
         wallBounce();
@@ -728,53 +731,53 @@ public strictfp class RobotPlayer {
     static boolean stepnum = true;
 
     static Direction getDirection(int dx, int dy) throws GameActionException{
-    	MapLocation l1 = rc.getLocation();
-    	return l1.directionTo(l1.translate(dx, dy));
+        MapLocation l1 = rc.getLocation();
+        return l1.directionTo(l1.translate(dx, dy));
     }
 
     /**
      * Takes a step in a direction until it hits a wall
      * Made for Muckrakers
-     * 
-	 * No return value, takes a step
+     *
+     * No return value, takes a step
      */
     static void wallBounce() throws GameActionException {
-    	// Set initial Direction away from E-center
-    	if (currentDirection == null) {
-    		MapLocation location = rc.getLocation(); // get current location
-    		Direction d1 = location.directionTo(origin).opposite();
+        // Set initial Direction away from E-center
+        if (currentDirection == null) {
+            MapLocation location = rc.getLocation(); // get current location
+            Direction d1 = location.directionTo(origin).opposite();
 
-    		if (Math.abs(d1.getDeltaX()) + Math.abs(d1.getDeltaY()) == 1) {
-	    		currentDirection = d1; // cardinal direction
-	    		altDirection = d1.rotateRight(); // diagonal direction
-	    	} else {
-	    		altDirection = d1;
-	    		currentDirection = d1.rotateRight();
-	    	}
-    	}
+            if (Math.abs(d1.getDeltaX()) + Math.abs(d1.getDeltaY()) == 1) {
+                currentDirection = d1; // cardinal direction
+                altDirection = d1.rotateRight(); // diagonal direction
+            } else {
+                altDirection = d1;
+                currentDirection = d1.rotateRight();
+            }
+        }
 
-    	// set step alternating step direction
-    	Direction stepdir = (stepnum) ? currentDirection : altDirection;
-    	MapLocation stepspot = rc.adjacentLocation(stepdir);
+        // set step alternating step direction
+        Direction stepdir = (stepnum) ? currentDirection : altDirection;
+        MapLocation stepspot = rc.adjacentLocation(stepdir);
 
-    	if (!rc.onTheMap(stepspot)) {
-    		int ax = altDirection.getDeltaX(), ay = altDirection.getDeltaY();
-    		if (currentDirection.getDeltaX() == 0) {
-    			currentDirection = currentDirection.opposite();
-    			altDirection = getDirection(ax, -ay);
-    		} else {
-    			currentDirection = currentDirection.opposite();
-    			altDirection = getDirection(-ax, ay);
-    		}
-    	}
+        if (!rc.onTheMap(stepspot)) {
+            int ax = altDirection.getDeltaX(), ay = altDirection.getDeltaY();
+            if (currentDirection.getDeltaX() == 0) {
+                currentDirection = currentDirection.opposite();
+                altDirection = getDirection(ax, -ay);
+            } else {
+                currentDirection = currentDirection.opposite();
+                altDirection = getDirection(-ax, ay);
+            }
+        }
 
-    	Direction randir = randomDirection();
-    	if (rc.canMove(stepdir))
-    		rc.move(stepdir);
-    	else if (rc.canMove(randir))
-    		rc.move(randir);
+        Direction randir = randomDirection();
+        if (rc.canMove(stepdir))
+            rc.move(stepdir);
+        else if (rc.canMove(randir))
+            rc.move(randir);
 
-    	stepnum = !stepnum;
+        stepnum = !stepnum;
     }
 
     /**
