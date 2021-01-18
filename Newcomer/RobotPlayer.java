@@ -99,12 +99,12 @@ public strictfp class RobotPlayer {
         //builds robots on a 4-round cycle, slanderes are built 2x as much as politicians an muckrakers
         //direction is automatically north but this can be changed, influence as well
 
-        int roundModFour = robotCount % 4;
-        switch (roundModFour) {
+        int roundMod = robotCount % 12;
+        switch (roundMod) {
             case 0:     buildSlanderer(influence);     break;
-            case 1:     buildMuckraker(influence);     break;
-            case 2:
-            case 3:     buildPolitician(influence);     break;
+            case 2:     buildMuckraker(influence / 2);     break;
+            case 6:
+            case 10:     buildPolitician(influence * 1.5);     break;
 
         }
     }
