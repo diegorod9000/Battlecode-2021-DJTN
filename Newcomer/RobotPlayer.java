@@ -26,7 +26,7 @@ public strictfp class RobotPlayer {
 
         turnCount = 0;
 
-        System.out.println("I'm a " + rc.getType() + " and I just got created!");
+        // System.out.println("I'm a " + rc.getType() + " and I just got created!");
         while (true) {
             turnCount += 1;
             // Try/catch blocks stop unhandled exceptions, which cause your robot to freeze
@@ -34,7 +34,7 @@ public strictfp class RobotPlayer {
                 // Here, we've separated the controls into a different method for each
                 // RobotType.
                 // You may rewrite this into your own control structure if you wish.
-                System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
+                // System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
                 switch (rc.getType()) {
                     case ENLIGHTENMENT_CENTER:
                         runEnlightenmentCenter();
@@ -55,7 +55,7 @@ public strictfp class RobotPlayer {
                 Clock.yield();
 
             } catch (Exception e) {
-                System.out.println(rc.getType() + " Exception");
+                // System.out.println(rc.getType() + " Exception");
                 e.printStackTrace();
             }
         }
@@ -106,10 +106,10 @@ public strictfp class RobotPlayer {
         if(direc==null)
             return;
         if (rc.canBuildRobot(RobotType.POLITICIAN, direc, influence)) {
-            System.out.println(influence);
+            // System.out.println(influence);
             rc.buildRobot(RobotType.POLITICIAN, direc, influence);
             robotCount++;
-            System.out.println("POLITICIAN built on round " + turnCount);
+            // System.out.println("POLITICIAN built on round " + turnCount);
         }
     }
 
@@ -120,7 +120,7 @@ public strictfp class RobotPlayer {
         if (rc.canBuildRobot(RobotType.SLANDERER, direc, influence)) {
             rc.buildRobot(RobotType.SLANDERER, direc, influence);
             robotCount++;
-            System.out.println("SLANDERER built on round " + turnCount);
+            // System.out.println("SLANDERER built on round " + turnCount);
         }
     }
 
@@ -131,7 +131,7 @@ public strictfp class RobotPlayer {
         if (rc.canBuildRobot(RobotType.MUCKRAKER, direc, influence)) {
             rc.buildRobot(RobotType.MUCKRAKER, direc, influence);
             robotCount++;
-            System.out.println("MUCKRAKER built on round " + turnCount);
+            // System.out.println("MUCKRAKER built on round " + turnCount);
         }
     }
 
@@ -201,11 +201,11 @@ public strictfp class RobotPlayer {
         for (int i = 0; i < nuetralECs.length; i++) {
             //System.out.println("Near " + nuetralECs[i].getType().toString());
             if (nuetralECs[i].getType().equals(RobotType.ENLIGHTENMENT_CENTER) && rc.canEmpower(actionRadius)) {
-                System.out.println("Near Enlightenment Center with team" + nuetralECs[i].getTeam().toString() + " with conviction " + nuetralECs[i].getConviction());
+                // System.out.println("Near Enlightenment Center with team" + nuetralECs[i].getTeam().toString() + " with conviction " + nuetralECs[i].getConviction());
                 if (nuetralECs[i].getTeam().equals(rc.getTeam().opponent())){
-                    System.out.println("yes");
+                    // System.out.println("yes");
                     rc.empower(actionRadius);
-                    System.out.println("Attacking Enlightenment Center");
+                    // System.out.println("Attacking Enlightenment Center");
                     return;
                 }
             }
@@ -214,9 +214,9 @@ public strictfp class RobotPlayer {
         double score = rc.getTeamVotes() / rc.getRoundNum();
         if (score >= .3) {
             if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
-                System.out.println("empowering...");
+                // System.out.println("empowering...");
                 rc.empower(actionRadius);
-                System.out.println("empowered");
+                // System.out.println("empowered");
                 return;
             }
 
@@ -227,7 +227,7 @@ public strictfp class RobotPlayer {
 
         if (winning || attackable.length == 0){
             if (tryMove(randomDirection()))
-                System.out.println("I moved!");
+                // System.out.println("I moved!");
         }
         else{
             Direction[] available = new Direction[8];
@@ -241,7 +241,7 @@ public strictfp class RobotPlayer {
                 for (int i = 0; i < available.length && !hasMoved; i++){
                     if (available[i] != null && tryMove(available[i])){
                         hasMoved = true;
-                        System.out.println("Politician has moved");
+                        // System.out.println("Politician has moved");
                     }
                 }
 
@@ -345,7 +345,7 @@ public strictfp class RobotPlayer {
     static void flee(int detectionRadius, RobotInfo[] threat) throws GameActionException 
     {
         MapLocation spot = rc.getLocation();
-        System.out.println("Threat Detected!");
+        // System.out.println("Threat Detected!");
         int xPos = spot.x;
         int yPos = spot.y;
         int yPriority = 0;
@@ -515,7 +515,7 @@ public strictfp class RobotPlayer {
             if (robot.type.canBeExposed()) {
                 // It's a slanderer... go get them!
                 if (rc.canExpose(robot.location)) {
-                    System.out.println("e x p o s e d");
+                    // System.out.println("e x p o s e d");
                     rc.expose(robot.location);
                     return;
                 }
@@ -689,7 +689,7 @@ public strictfp class RobotPlayer {
      * @throws GameActionException
      */
     static boolean tryMove(Direction dir) throws GameActionException {
-        System.out.println("I am trying to move " + dir + "; " + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
+        // System.out.println("I am trying to move " + dir + "; " + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
         if (rc.canMove(dir)) {
             rc.move(dir);
             return true;
