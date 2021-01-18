@@ -173,7 +173,7 @@ public strictfp class RobotPlayer {
 
     static void runEnlightenmentCenter() throws GameActionException {
         //building
-        if (rc.senseNearbyRobots(40, rc.getTeam().opponent()).length > 4) {
+        if (rc.senseNearbyRobots(40, rc.getTeam().opponent()).length >= 10) {
             //builds politicians if there are lots of opponents nearby.
             buildPolitician((int)(Math.round(rc.getInfluence() * calcLinearBuildPercent())));
         } else {
@@ -266,7 +266,7 @@ public strictfp class RobotPlayer {
 
         firstTurn = false;
         homeID = nearestEC.getID();
-        System.out.println("My home ID is " + homeID);
+//        System.out.println("My home ID is " + homeID);
 
     }
 
@@ -379,6 +379,7 @@ public strictfp class RobotPlayer {
         }
 
         boolean winning = true;
+        boolean nearHome = false;
 
 
         RobotInfo[] attackable = rc.senseNearbyRobots(actionRadius, enemy);
@@ -387,20 +388,26 @@ public strictfp class RobotPlayer {
         if(nuetralECs.length != 0){
             if(rc.canEmpower(actionRadius)){
                 rc.empower(actionRadius);
-                System.out.println("Empowering near Neutral Enlightenment Center");
+                // System.out.println("Empowering near Neutral Enlightenment Center");
             }
         }
 
-//        System.out.println("" + rc.getTeamVotes() + " " + rc.getRoundNum());
+        // Checking if within EC radius
+        for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, rc.getTeam())) {
+            if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
+                nearHome = true;
+            }
+        }
+
+        // System.out.println("" + rc.getTeamVotes() + " " + rc.getRoundNum());
         double rand = Math.random();
-        if (rand <= .1) {
-            if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
+        if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
+            if (nearHome || rand <= .1) {
                 // System.out.println("empowering...");
                 rc.empower(actionRadius);
-                System.out.println("empowered");
+                // System.out.println("empowered");
                 return;
             }
-
         } else {
             winning = false;
             //System.out.println("We are losing badly so I will not attack");
