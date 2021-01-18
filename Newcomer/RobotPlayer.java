@@ -226,8 +226,9 @@ public strictfp class RobotPlayer {
         }
 
         if (winning || attackable.length == 0){
-            if (tryMove(randomDirection()))
+            if (tryMove(randomDirection())){
                 // System.out.println("I moved!");
+            }
         }
         else{
             Direction[] available = new Direction[8];
