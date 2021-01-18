@@ -578,11 +578,13 @@ public strictfp class RobotPlayer {
     			currentDirection = getDirection(-currentDirection.getDeltaX(), 0);
     			altDirection = getDirection(-altDirection.getDeltaX(), altDirection.getDeltaY());
     		}
-    		wallBounce();
-    	} else if (rc.canMove(stepdir))
+    	}
+
+    	Direction randir = randomDirection();
+    	if (rc.canMove(stepdir))
     		rc.move(stepdir);
-    	else
-    		tryMove(randomDirection());
+    	else if (rc.canMove(randir))
+    		rc.move(randir);
 
     	stepnum = !stepnum;
     }
