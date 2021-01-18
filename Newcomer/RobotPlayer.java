@@ -93,10 +93,10 @@ public strictfp class RobotPlayer {
 
         int roundModFour = robotCount % 4;
         switch (roundModFour) {
-            case 0:     buildPolitician(influence);     break;
+            case 0:     buildSlanderer(influence);     break;
             case 1:     buildMuckraker(influence);     break;
             case 2:
-            case 3:     buildSlanderer(influence);     break;
+            case 3:     buildPolitician(influence);     break;
 
         }
     }
