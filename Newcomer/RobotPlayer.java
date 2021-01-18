@@ -102,10 +102,11 @@ public strictfp class RobotPlayer {
 
         int roundMod = turnCount % 12;
         switch (roundMod) {
-            case 0:     buildSlanderer(influence);     break;
-            case 2:     buildMuckraker(influence / 2);     break;
-            case 6:
-            case 10:     buildPolitician(influence * 3/2);     break;
+            case 0:     buildMuckraker(1);     break;
+            case 2:     
+            case 4:     buildPolitician(influence);     break;
+            case 6:     buildMuckraker(1);              break;
+            case 10:    buildSlanderer(influence);     break;
 
         }
     }
@@ -181,13 +182,17 @@ public strictfp class RobotPlayer {
         }
 
         //bidding
-        if (turnCount % 3 == 0) {
+
+        if (turnCount <= 300) {
             if (rc.canBid(1)) {
                 rc.bid(1);
             }
+        } else if (turnCount == GAME_MAX_NUMBER_OF_ROUNDS - 1) {
+            rc.bid(rc.getInfluence());
         } else {
             bidPercent(calcQuadBidPercent());
         }
+        
     }
 
 
