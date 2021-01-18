@@ -391,8 +391,8 @@ public strictfp class RobotPlayer {
         }
 
 //        System.out.println("" + rc.getTeamVotes() + " " + rc.getRoundNum());
-        double score = rc.getTeamVotes() / rc.getRoundNum();
-        if (score >= .3) {
+	double rand = Math.random();
+        if (rand <= .1) {
             if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
                 // System.out.println("empowering...");
                 rc.empower(actionRadius);
