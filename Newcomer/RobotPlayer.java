@@ -2,6 +2,7 @@ package Newcomer;
 
 import battlecode.common.*;
 //import sun.java2d.x11.X11SurfaceDataProxy;
+import java.util.ArrayList;
 
 public strictfp class RobotPlayer {
     static RobotController rc;
@@ -18,6 +19,8 @@ public strictfp class RobotPlayer {
 
     static MapLocation targetLoc = null;
     static MapLocation origin = null;
+
+    static ArrayList<Integer> childIDs = new ArrayList<>();
 
     /**
      * run() is the method that is called when a robot is instantiated in the
@@ -103,7 +106,7 @@ public strictfp class RobotPlayer {
         int roundMod = turnCount % 12;
         switch (roundMod) {
             case 0:     buildMuckraker();      break;
-            case 2:     
+            case 2:
             case 4:     buildPolitician(influence);     break;
             case 6:     buildMuckraker();      break;
             case 10:    buildSlanderer(influence);      break;
@@ -170,10 +173,34 @@ public strictfp class RobotPlayer {
         return (-1.0/150 * turnCount + 50) / 100.0;
     }
 
+    static void senseChildIDs() throws GameActionException{
+        RobotInfo[] nearbyChildren = rc.senseNearbyRobots(1,rc.getTeam());
+        boolean alreadyStored = false;
+        for (int i = 0; i < nearbyChildren.length;i++){
+            alreadyStored = false;
+            for(int j = 0; j < childIDs.size();j++){
+                Integer converted = new Integer(nearbyChildren[i].getID());
+                if(childIDs.get(j).equals(converted)){
+                    alreadyStored = true;
+                }
+            }
+            if(!alreadyStored){
+                childIDs.add(nearbyChildren[i].getID());
+            }
+        }
+    }
 
     static int robotCount;
 
     static void runEnlightenmentCenter() throws GameActionException {
+        //storing child IDs to look for flags
+        senseChildIDs();
+
+        //
+
+
+
+
         //building
         if (rc.senseNearbyRobots(40, rc.getTeam().opponent()).length >= 10) {
             //builds politicians if there are lots of opponents nearby.
@@ -194,7 +221,7 @@ public strictfp class RobotPlayer {
         } else {
             bidPercent(calcQuadBidPercent());
         }
-        
+
     }
 
 
@@ -348,12 +375,18 @@ public strictfp class RobotPlayer {
 
     //checks if arrived at target, if so empowers and then ends mission (targetLoc = null)
     static boolean arrived(int actionRadius) throws GameActionException{
+
+        //NEED TO MAKE SURE ITS STILL NUETRAL
         if(rc.getLocation().distanceSquaredTo(targetLoc) < actionRadius){
-            if(rc.canEmpower(actionRadius)){
-                rc.empower(actionRadius);
-                targetLoc = null;
-                return true;
+            if(rc.senseNearbyRobots(targetLoc,actionRadius,Team.NEUTRAL).length > 0){
+                if(rc.canEmpower(actionRadius)){
+                    rc.empower(actionRadius);
+                    targetLoc = null;
+                    return true;
+                }
             }
+            targetLoc = null;
+            return true;
         }
         return false;
     }
