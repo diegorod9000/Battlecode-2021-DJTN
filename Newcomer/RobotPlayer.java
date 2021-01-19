@@ -102,11 +102,11 @@ public strictfp class RobotPlayer {
 
         int roundMod = turnCount % 12;
         switch (roundMod) {
-            case 0:     buildMuckraker(1);     break;
+            case 0:     buildMuckraker();      break;
             case 2:     
             case 4:     buildPolitician(influence);     break;
-            case 6:     buildMuckraker(1);              break;
-            case 10:    buildSlanderer(influence);     break;
+            case 6:     buildMuckraker();      break;
+            case 10:    buildSlanderer(influence);      break;
 
         }
     }
@@ -134,12 +134,13 @@ public strictfp class RobotPlayer {
         }
     }
 
-    static void buildMuckraker(int influence) throws GameActionException {
+    static void buildMuckraker() throws GameActionException {
         Direction direc=findDirection(0);
+        int muckInf = 1;
         if(direc==null)
             return;
-        if (rc.canBuildRobot(RobotType.MUCKRAKER, direc, influence)) {
-            rc.buildRobot(RobotType.MUCKRAKER, direc, influence);
+        if (rc.canBuildRobot(RobotType.MUCKRAKER, direc, muckInf)) {
+            rc.buildRobot(RobotType.MUCKRAKER, direc, muckInf);
             robotCount++;
             // System.out.println("MUCKRAKER built on round " + turnCount);
         }
@@ -184,11 +185,12 @@ public strictfp class RobotPlayer {
         //bidding
 
         if (turnCount <= 300) {
-            if (rc.canBid(1)) {
+            if (rc.canBid(1))
                 rc.bid(1);
-            }
-        } else if (turnCount == GameConstants.GAME_MAX_NUMBER_OF_ROUNDS - 1) {
+        } else if (turnCount > GameConstants.GAME_MAX_NUMBER_OF_ROUNDS - 25) {
             rc.bid(rc.getInfluence());
+//        } else if (turnCount > GameConstants.GAME_MAX_NUMBER_OF_ROUNDS * 2/3) {
+//            rc.bid(10);
         } else {
             bidPercent(calcQuadBidPercent());
         }
