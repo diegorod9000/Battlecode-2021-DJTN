@@ -3,6 +3,7 @@ package Newcomer;
 import battlecode.common.*;
 //import sun.java2d.x11.X11SurfaceDataProxy;
 import java.util.ArrayList;
+import java.util.Map;
 
 public strictfp class RobotPlayer {
     static RobotController rc;
@@ -291,6 +292,7 @@ public strictfp class RobotPlayer {
             bidPercent(calcQuadBidPercent());
         }
 
+        //flags
         getAndSendFlags();
     }
 
@@ -298,30 +300,56 @@ public strictfp class RobotPlayer {
     static void sendMovingFlag() throws GameActionException {
         //for moving robots if they see an enemy, reports the enemy's location and ID in flag
 
-        RobotInfo[] enemyBotInfo = rc.senseNearbyRobots(20, rc.getTeam().opponent());
-        RobotInfo[] neutralBotInfo = rc.senseNearbyRobots(20, Team.NEUTRAL);
-        MapLocation location = new MapLocation(0, 0);
+        RobotInfo[] nearbyRobots = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared);
         int intID = 0;
 
-        if (enemyBotInfo.length == 0 && neutralBotInfo.length == 0) {
+        if (nearbyRobots.length == 0) {
             //sends no flag if there are no enemies detected
             return;
         }
 
-        for (RobotInfo info : enemyBotInfo) {
-            //if any opponent is an enlightenment center, set ID to 0 or 1023 based on team
-            if (info.getType().equals(RobotType.ENLIGHTENMENT_CENTER)) {
-                intID = 1023;
-                location = info.getLocation();
-                int x = location.x, y = location.y;
-                int encodedLocation = ((intID & BITMASKID) << 2 * NBITS) + ((x & BITMASK) << NBITS) + (y & BITMASK);
-                if (rc.canSetFlag(encodedLocation)) {
-                    rc.setFlag(encodedLocation);
-                    return;
+        int flagToBeSet = 0;
+        for(int i = 0; i < nearbyRobots.length;i++){
+            if(nearbyRobots[i].getType().equals(RobotType.ENLIGHTENMENT_CENTER)){
+                if(!nearbyRobots[i].getTeam().equals(rc.getTeam())){
+                    flagToBeSet = encodeLocation(nearbyRobots[i].getLocation(),nearbyRobots[i].getTeam());
+                    if(rc.canSetFlag(flagToBeSet)){
+                        rc.setFlag(flagToBeSet);
+                        return;
+                    }
                 }
             }
         }
     }
+
+    static int encodeLocation(MapLocation reportlocation, Team team){
+        int xDif = reportlocation.x - origin.x + 64;
+        int yDif = reportlocation.y - origin.y + 64;
+
+        String xDifBin = Integer.toBinaryString(xDif);
+        String yDifBin = Integer.toBinaryString(yDif);
+
+        while(xDifBin.length() < 7){
+            xDifBin = "0"+xDifBin;
+        }
+        while(yDifBin.length() < 7){
+            yDifBin = "0"+yDifBin;
+        }
+
+        String coordSend = xDifBin + yDifBin;
+
+        if(team.equals(rc.getTeam().opponent())){
+            coordSend += "1111111111";
+        }
+        else{
+            coordSend += "0000000000";
+        }
+
+        int coordSendInt = Integer.parseInt(coordSend,2);
+        return coordSendInt;
+
+    }
+
 
     //run at top of code (runs first turn and records id of home EC
     static void getHomeECID () throws GameActionException {
@@ -438,9 +466,13 @@ public strictfp class RobotPlayer {
     static void polCheckHomeFlag () throws GameActionException {
         //System.out.println("Home ID:" + homeID);
         int flag = rc.getFlag(homeID);
-
         //IMPLEMENT CODE TO GET FLAG INFORMATION
+        decodeLocation(flag);
 
+    }
+
+    static void decodeLocation(int flag) throws GameActionException{
+        
     }
 
 
