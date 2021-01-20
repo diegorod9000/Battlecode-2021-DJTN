@@ -82,9 +82,9 @@ public strictfp class RobotPlayer {
 
   static void getAndSendFlags() throws GameActionException {
 
-    //updates friendly robots
-    RobotInfo[] ALlFriendsSeen = rc.senseNearbyRobots(3, rc.getTeam());
-    for (RobotInfo info : ALlFriendsSeen) {
+    //adds new friendly robots
+    RobotInfo[] AllFriendsSeen = rc.senseNearbyRobots(1, rc.getTeam());
+    for (RobotInfo info : AllFriendsSeen) {
       Integer integerID = new Integer(info.getID());
       if (!friendlyIDs.contains(integerID)) {
         friendlyIDs.add(integerID);
