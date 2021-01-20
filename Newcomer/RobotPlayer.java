@@ -331,7 +331,7 @@ public strictfp class RobotPlayer {
             if(nearbyRobots[i].getType() == RobotType.ENLIGHTENMENT_CENTER){
                 if(nearbyRobots[i].getTeam() != rc.getTeam()){
                     flagToBeSet = encodeLocation(nearbyRobots[i].getLocation(),nearbyRobots[i].getTeam());
-                    if(rc.canSetFlag(flagToBeSet)){
+                    if(rc.canSetFlag(flagToBeSet) && flagToBeSet != 0){
                         rc.setFlag(flagToBeSet);
                         return;
                     }
@@ -341,6 +341,11 @@ public strictfp class RobotPlayer {
     }
 
     static int encodeLocation(MapLocation reportlocation, Team team){
+
+        if(origin == null){
+            return 0;
+        }
+
         int xDif = reportlocation.x - origin.x + 64;
         int yDif = reportlocation.y - origin.y + 64;
 
@@ -588,7 +593,7 @@ public strictfp class RobotPlayer {
     static void runSlanderer () throws GameActionException {
 
         sendMovingFlag();
-        setHome();
+        //setHome();
 
         if (!rc.isReady()) {
             return;
