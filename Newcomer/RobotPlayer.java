@@ -2,6 +2,7 @@ package Newcomer;
 
 import battlecode.common.*;
 //import sun.java2d.x11.X11SurfaceDataProxy;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -99,33 +100,35 @@ public strictfp class RobotPlayer {
         //adds new friendly robots
         RobotInfo[] AllFriendsSeen = rc.senseNearbyRobots(1, rc.getTeam());
         for (RobotInfo info : AllFriendsSeen) {
-            Integer integerID = new Integer(info.getID());
-            if (!friendlyIDs.contains(integerID)) {
-                friendlyIDs.add(integerID);
+            if (!friendlyIDs.contains(info.getID())) {
+                friendlyIDs.add(info.getID());
             }
         }
 
         //deletes dead robots
-        for (int index = 0; index < friendlyIDs.size(); index++) {
-            if (!rc.canGetFlag(friendlyIDs.get(index).intValue())) {
-                friendlyIDs.remove(index);
-                index--;
-            }
-        }
+//        for (int index = 0; index < friendlyIDs.size(); index++) {
+//            if (!rc.canGetFlag(friendlyIDs.get(index))) {
+//                friendlyIDs.remove(index);
+//                index--;
+//            }
+//        }
 
         ArrayList<Integer> newFlags = new ArrayList<Integer>();
         for (Integer ID : friendlyIDs) {
-            if (rc.canGetFlag(ID.intValue())) {
-                Integer temp = new Integer(rc.getFlag(ID.intValue()));
-                newFlags.add(temp);
+            if (rc.canGetFlag(ID)) {
+                if (rc.getFlag(ID) != 0) {
+                    newFlags.add(rc.getFlag(ID));
+                }
             }
         }
+
 
         for (Integer newFlag : newFlags) {
             if (!allFlags.contains(newFlag)) {
                 allFlags.add(newFlag);
             }
         }
+
 
         if (allFlags.size() > 0) {
             if (rc.canSetFlag(allFlags.get(0).intValue())) {
@@ -513,12 +516,19 @@ public strictfp class RobotPlayer {
 
 
         RobotInfo[] attackable = rc.senseNearbyRobots(actionRadius, enemy);
-        RobotInfo[] nuetralECs = rc.senseNearbyRobots(actionRadius, Team.NEUTRAL);
+        RobotInfo[] neutralECs = rc.senseNearbyRobots(actionRadius, Team.NEUTRAL);
 
-        if (nuetralECs.length != 0) {
+        for (RobotInfo id : attackable) {
+            if (id.getType() == RobotType.ENLIGHTENMENT_CENTER) {
+                if (rc.canEmpower(actionRadius)) {
+                    rc.empower(actionRadius);
+                }
+            }
+        }
+
+        if (neutralECs.length != 0) {
             if (rc.canEmpower(actionRadius)) {
                 rc.empower(actionRadius);
-                // System.out.println("Empowering near Neutral Enlightenment Center");
             }
         }
 
