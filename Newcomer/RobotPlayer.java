@@ -505,7 +505,9 @@ public strictfp class RobotPlayer {
 
     //Politician AI
     static void runPolitician () throws GameActionException {
-        sendMovingFlag();
+        if(origin != null){
+            sendMovingFlag();
+        }
         setHome();
 
         //basic variables
@@ -517,10 +519,7 @@ public strictfp class RobotPlayer {
         getHomeECID();
 
         //checks if on mission
-        if (onMission() && !arrived(actionRadius)) {
-            polPathFind();
-            return;
-        }
+
 
         boolean winning = true;
         boolean nearHome = false;
@@ -543,6 +542,11 @@ public strictfp class RobotPlayer {
             }
         }
 
+        if (origin != null && onMission() && !arrived(actionRadius)) {
+            polPathFind();
+            return;
+        }
+
         // Checking if within EC radius
         for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, rc.getTeam())) {
             if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
@@ -560,7 +564,7 @@ public strictfp class RobotPlayer {
                 return;
             }
         } else {
-            winning = false;
+            winning = true;
             //System.out.println("We are losing badly so I will not attack");
         }
 
