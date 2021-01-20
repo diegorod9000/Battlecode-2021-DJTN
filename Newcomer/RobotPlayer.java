@@ -418,7 +418,13 @@ public strictfp class RobotPlayer {
         double max = 0.0;
         Direction bestDir = null;
         for (int i = 0; i < availDirs.length; i++) {
-            double currentPass = rc.sensePassability(rc.getLocation().add(availDirs[i]));
+            double currentPass = 0.0;
+            try {
+                currentPass = rc.sensePassability(rc.getLocation().add(availDirs[i]));
+            }catch(Exception e){
+                currentPass = 0.001;
+            }
+
             if (currentPass > max) {
                 bestDir = availDirs[i];
                 max = currentPass;
