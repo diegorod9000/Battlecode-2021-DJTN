@@ -37,7 +37,7 @@ public strictfp class RobotPlayer {
 
         turnCount = 0;
 
-        System.out.println("I'm a " + rc.getType() + " and I just got created!");
+        // System.out.println("I'm a " + rc.getType() + " and I just got created!");
 
 
         while (true) {
@@ -81,6 +81,19 @@ public strictfp class RobotPlayer {
     static ArrayList<Integer> friendlyIDs = new ArrayList<Integer>();
     static ArrayList<Integer> allFlags = new ArrayList<Integer>();
 
+    static void setHome() throws GameActionException {
+        if (origin == null) {
+            Team teammate = rc.getTeam();
+            actionRadius = rc.getType().actionRadiusSquared;
+            for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
+                if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
+                    origin = robot.getLocation();
+                }
+            }
+        }
+        return;
+    }
+
     static void getAndSendFlags() throws GameActionException {
 
         //adds new friendly robots
@@ -114,8 +127,10 @@ public strictfp class RobotPlayer {
             }
         }
 
-        if (rc.canSetFlag(allFlags.get(1).intValue())) {
-            rc.setFlag(allFlags.get(1).intValue());
+        if (allFlags.size() > 0) {
+            if (rc.canSetFlag(allFlags.get(0).intValue())) {
+                rc.setFlag(allFlags.get(0).intValue());
+            }
         }
     }
 
@@ -310,8 +325,8 @@ public strictfp class RobotPlayer {
 
         int flagToBeSet = 0;
         for(int i = 0; i < nearbyRobots.length;i++){
-            if(nearbyRobots[i].getType().equals(RobotType.ENLIGHTENMENT_CENTER)){
-                if(!nearbyRobots[i].getTeam().equals(rc.getTeam())){
+            if(nearbyRobots[i].getType() == RobotType.ENLIGHTENMENT_CENTER){
+                if(!nearbyRobots[i].getTeam() == rc.getTeam()){
                     flagToBeSet = encodeLocation(nearbyRobots[i].getLocation(),nearbyRobots[i].getTeam());
                     if(rc.canSetFlag(flagToBeSet)){
                         rc.setFlag(flagToBeSet);
@@ -326,27 +341,19 @@ public strictfp class RobotPlayer {
         int xDif = reportlocation.x - origin.x + 64;
         int yDif = reportlocation.y - origin.y + 64;
 
-        String xDifBin = Integer.toBinaryString(xDif);
-        String yDifBin = Integer.toBinaryString(yDif);
+        String xDifBin = Integer.toString(xDif);
+        String yDifBin = Integer.toString(yDif);
 
-        while(xDifBin.length() < 7){
+        while(xDifBin.length() < 3){
             xDifBin = "0"+xDifBin;
         }
-        while(yDifBin.length() < 7){
+        while(yDifBin.length() < 3){
             yDifBin = "0"+yDifBin;
         }
 
-        String coordSend = xDifBin + yDifBin;
+        String ecteam = (team.equals(rc.getTeam().opponent())) ? "1" : "0";
 
-        if(team.equals(rc.getTeam().opponent())){
-            coordSend += "1111111111";
-        }
-        else{
-            coordSend += "0000000000";
-        }
-
-        int coordSendInt = Integer.parseInt(coordSend,2);
-        return coordSendInt;
+        return Integer.parseInt(xDifBin + yDifBin + ecteam);
 
     }
 
@@ -452,8 +459,6 @@ public strictfp class RobotPlayer {
             if (rc.senseNearbyRobots(targetLoc, actionRadius, Team.NEUTRAL).length > 0) {
                 if (rc.canEmpower(actionRadius)) {
                     rc.empower(actionRadius);
-                    targetLoc = null;
-                    return true;
                 }
             }
             targetLoc = null;
@@ -468,17 +473,27 @@ public strictfp class RobotPlayer {
         int flag = rc.getFlag(homeID);
         //IMPLEMENT CODE TO GET FLAG INFORMATION
         decodeLocation(flag);
-
     }
 
-    static void decodeLocation(int flag) throws GameActionException{
-        
+    static Team decodeLocation(int flag) throws GameActionException{
+        String flagS = Integer.toString(flag);
+        while(flagS.length() < 7) {
+            flagS = "0" + flagS;
+        }
+        int xDif = Integer.parseInt(flagS.substring(0, 3));
+        int yDif = Integer.parseInt(flagS.substring(3, 6));
+        int team = Integer.parseInt(flagS.substring(6));
+
+        targetLoc = new MapLocation(origin.x + xDif - 64, origin.y + yDif - 64);
+        return (team == 1) ? rc.getTeam().opponent() : Team.NEUTRAL;
     }
 
 
     //Politician AI
     static void runPolitician () throws GameActionException {
         sendMovingFlag();
+        setHome();
+
         //basic variables
         Team enemy = rc.getTeam().opponent();
         int actionRadius = rc.getType().actionRadiusSquared;
@@ -557,6 +572,7 @@ public strictfp class RobotPlayer {
     static void runSlanderer () throws GameActionException {
 
         sendMovingFlag();
+        setHome();
 
         if (!rc.isReady()) {
             return;
@@ -798,6 +814,7 @@ public strictfp class RobotPlayer {
     static void runMuckraker () throws GameActionException {
 
         sendMovingFlag();
+        setHome();
 
         if (!rc.isReady())
             return;
@@ -815,15 +832,7 @@ public strictfp class RobotPlayer {
             }
         }
 
-        if (origin == null) {
-            Team teammate = rc.getTeam();
-            actionRadius = rc.getType().actionRadiusSquared;
-            for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
-                if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
-                    origin = robot.getLocation();
-                }
-            }
-        }
+
 
         wallBounce();
     }
