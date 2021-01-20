@@ -170,6 +170,15 @@ public strictfp class RobotPlayer {
 
     }
   }
+  
+  static void buildEarly() throws GameActionException {
+      // builds initial robots in specified manner
+      // slanderers and muckrakers only
+      if (rc.getInfluence() >= 130)
+          buildSlanderer(130);
+      else
+          buildMuckraker();
+  }
 
   static void buildPolitician(int influence) throws GameActionException {
     Direction direc = findDirection(0);
@@ -250,32 +259,29 @@ public strictfp class RobotPlayer {
   static int robotCount;
 
   static void runEnlightenmentCenter() throws GameActionException {
-    //storing child IDs to look for flags
-    senseChildIDs();
-
-    //
-
-
-    //building
-    if (rc.senseNearbyRobots(40, rc.getTeam().opponent()).length >= 10) {
-      //builds politicians if there are lots of opponents nearby.
-      buildPolitician((int) (Math.round(rc.getInfluence() * calcLinearBuildPercent())));
+    
+    // building stages
+    if (turnCount <= 75 && enemiesNearby.length > 0 || enemiesNearby.length >= 15) {
+        //builds politicians if there are lots of opponents nearby
+        buildPolitician((int)(Math.round(rc.getInfluence() * calcLinearBuildPercent())));
+    } else if (turnCount<= 100) {
+        buildEarly();
     } else {
-      buildAlternating((int) (Math.round(rc.getInfluence() * calcLinearBuildPercent())));
+        buildAlternating((int)(Math.round(rc.getInfluence() * calcLinearBuildPercent())));
     }
 
-    //bidding
-
+    // bidding stages
     if (turnCount <= 300) {
-      if (rc.canBid(1))
-        rc.bid(1);
+        if (rc.canBid(1))
+            rc.bid(1);
     } else if (turnCount > GameConstants.GAME_MAX_NUMBER_OF_ROUNDS - 25) {
-      rc.bid(rc.getInfluence());
+        rc.bid(rc.getInfluence());
 //        } else if (turnCount > GameConstants.GAME_MAX_NUMBER_OF_ROUNDS * 2/3) {
 //            rc.bid(10);
     } else {
-      bidPercent(calcQuadBidPercent());
+        bidPercent(calcQuadBidPercent());
     }
+    
     getAndSendFlags();
   }
 
