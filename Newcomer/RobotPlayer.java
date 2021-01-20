@@ -84,7 +84,7 @@ public strictfp class RobotPlayer {
     static void setHome() throws GameActionException {
         if (origin == null) {
             Team teammate = rc.getTeam();
-            actionRadius = rc.getType().actionRadiusSquared;
+            int actionRadius = rc.getType().actionRadiusSquared;
             for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
                 if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
                     origin = robot.getLocation();
@@ -326,7 +326,7 @@ public strictfp class RobotPlayer {
         int flagToBeSet = 0;
         for(int i = 0; i < nearbyRobots.length;i++){
             if(nearbyRobots[i].getType() == RobotType.ENLIGHTENMENT_CENTER){
-                if(!nearbyRobots[i].getTeam() == rc.getTeam()){
+                if(nearbyRobots[i].getTeam() != rc.getTeam()){
                     flagToBeSet = encodeLocation(nearbyRobots[i].getLocation(),nearbyRobots[i].getTeam());
                     if(rc.canSetFlag(flagToBeSet)){
                         rc.setFlag(flagToBeSet);
