@@ -74,9 +74,42 @@ public strictfp class RobotPlayer {
     }
 
 
+  static final int NBITS = 7;
+  static final int BITMASK = (1 << NBITS) - 1;
+  static final int BITMASKID = (1 << 10) - 1;
+  static ArrayList<Integer> friendlyIDs = new ArrayList<Integer>();
+  static ArrayList<Integer> allFlags = new ArrayList<Integer>();
 
+  static void getAndSendFlags() throws GameActionException {
 
+    //updates friendly robots
+    RobotInfo[] ALlFriendsSeen = rc.senseNearbyRobots(3, rc.getTeam());
+    for (RobotInfo info: ALlFriendsSeen) {
+      Integer integerID = new Integer(info.getID());
+      if (!friendlyIDs.contains(integerID)) {
+        friendlyIDs.add(integerID);
+      }
+    }
 
+    ArrayList<Integer> newFlags = new ArrayList<Integer>();
+
+    for (Integer ID: friendlyIDs) {
+      if (rc.canGetFlag(ID.intValue())) {
+        Integer temp = new Integer(rc.getFlag(ID.intValue()));
+        newFlags.add(temp);
+      }
+    }
+
+    for (Integer newFlag: newFlags) {
+      if (!allFlags.contains(newFlag)) {
+        allFlags.add(newFlag);
+      }
+    }
+
+    if (rc.canSetFlag(allFlags.get(1).intValue())) {
+      rc.setFlag(allFlags.get(1).intValue());
+    }
+  }
 
     static Direction findDirection(int num) {
         if(num>8)
@@ -221,59 +254,37 @@ public strictfp class RobotPlayer {
         } else {
             bidPercent(calcQuadBidPercent());
         }
+        
+        getAndSendFlags();
 
     }
 
 
-    static void sendMovingFlag() throws GameActionException {
-        //for moving robots if they see an enemy, reports the enemy's location and ID in flag
+  static void sendMovingFlag() throws GameActionException {
+    //for moving robots if they see an enemy, reports the enemy's location and ID in flag
 
-        RobotInfo[] enemyBotInfo = rc.senseNearbyRobots(20, rc.getTeam().opponent());
-        MapLocation location = new MapLocation(0,0);
-        int intID = 0;
-        boolean found = false;
-        boolean inBounds = true;
+    RobotInfo[] enemyBotInfo = rc.senseNearbyRobots(20, rc.getTeam().opponent());
+    RobotInfo[] neutralBotInfo = rc.senseNearbyRobots(20, Team.NEUTRAL);
+    MapLocation location = new MapLocation(0,0);
+    int intID = 0;
 
-        if (enemyBotInfo.length != 0) {
-            //sends flag if there are enemies detected
+    if (enemyBotInfo.length == 0 && neutralBotInfo.length == 0) {
+      //sends no flag if there are no enemies detected
+      return;
+    }
 
-            for (RobotInfo info: enemyBotInfo) {
-                //if any opponent is an enlightenment center, set ID to 0 or 1023 based on team
-                if (info.getType() == RobotType.ENLIGHTENMENT_CENTER) {
-                    if (info.getTeam() == Team.NEUTRAL) {
-                        intID = 0;
-                    } else {
-                        intID = 1023;
-                    }
-                    location = info.getLocation();
-                    found = true;
-                }
-            }
-
-            if (!found) {
-                //if no center found and if the ID is between 1 and 1022, set ID and location
-                for (RobotInfo info: enemyBotInfo) {
-                    if (info.getID() % 1024 == 0 || info.getID() % 1024 == 1023) {
-                        inBounds = false;
-                    }
-                }
-
-                if (inBounds) {
-                    intID = enemyBotInfo[0].getID() % 1024;
-                    location = enemyBotInfo[0].getLocation();
-                }
-            }
-
-            if (inBounds) {
-                //sends flag if the ID is between 1 and 1022, because 0 and 1023 are for E-Centers
-                int x = location.x, y = location.y;
-                int encodedLocation = 0;
-                //((intID & BITMASK) << 2 * NBITS) + ((x & BITMASK) << NBITS) + (y & BITMASK);
-                if (rc.canSetFlag(encodedLocation)) {
-                    rc.setFlag(encodedLocation);
-                }
-            }
+    for (RobotInfo info: enemyBotInfo) {
+      //if any opponent is an enlightenment center, set ID to 0 or 1023 based on team
+      if (info.getType() == RobotType.ENLIGHTENMENT_CENTER) {
+        intID = 1023;
+        location = info.getLocation();
+        int x = location.x, y = location.y;
+        int encodedLocation = ((intID & BITMASKID) << 2 * NBITS) + ((x & BITMASK) << NBITS) + (y & BITMASK);
+        if (rc.canSetFlag(encodedLocation)) {
+          rc.setFlag(encodedLocation);
+          return;
         }
+      }
     }
 
 
