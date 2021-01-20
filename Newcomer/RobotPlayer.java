@@ -91,8 +91,15 @@ public strictfp class RobotPlayer {
       }
     }
 
+    //deletes dead robots
+    for (int index = 0; index < friendlyIDs.size(); index++) {
+      if (!rc.canGetFlag(friendlyIDs.get(index).intValue())) {
+        friendlyIDs.remove(index);
+        index--;
+      }
+    }
+    
     ArrayList<Integer> newFlags = new ArrayList<Integer>();
-
     for (Integer ID : friendlyIDs) {
       if (rc.canGetFlag(ID.intValue())) {
         Integer temp = new Integer(rc.getFlag(ID.intValue()));
