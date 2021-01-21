@@ -315,6 +315,8 @@ public strictfp class RobotPlayer {
     }
 
 
+
+    // FLAGS FLAGS FLAGS FLAGS FLAGS FLAGS FLAGS FLAGS FLAGS FLAGS FLAGS FLAGS FLAGS FLAGS FLAGS
     static void sendMovingFlag() throws GameActionException {
         //for moving robots if they see an enemy, reports the enemy's location and ID in flag
 
@@ -328,42 +330,47 @@ public strictfp class RobotPlayer {
 
         int flagToBeSet = 0;
         for(int i = 0; i < nearbyRobots.length;i++){
-            if(nearbyRobots[i].getType() == RobotType.ENLIGHTENMENT_CENTER){
-                if(nearbyRobots[i].getTeam() != rc.getTeam()){
-                    flagToBeSet = encodeLocation(nearbyRobots[i].getLocation(),nearbyRobots[i].getTeam());
-                    if(rc.canSetFlag(flagToBeSet) && flagToBeSet != 0){
-                        rc.setFlag(flagToBeSet);
-                        return;
-                    }
+            if(nearbyRobots[i].getType() == RobotType.ENLIGHTENMENT_CENTER && nearbyRobots[i].getTeam() != rc.getTeam()){
+                flagToBeSet = encodeFlag(nearbyRobots[i].getLocation(),nearbyRobots[i].getTeam());
+                if(rc.canSetFlag(flagToBeSet)) {
+                    rc.setFlag(flagToBeSet);
+                    return;
                 }
             }
         }
     }
 
-    static int encodeLocation(MapLocation reportlocation, Team team){
-
-        if(origin == null){
-            return 0;
-        }
-
-        int xDif = reportlocation.x - origin.x + 64;
-        int yDif = reportlocation.y - origin.y + 64;
-
-        String xDifBin = Integer.toString(xDif);
-        String yDifBin = Integer.toString(yDif);
-
-        while(xDifBin.length() < 3){
-            xDifBin = "0"+xDifBin;
-        }
-        while(yDifBin.length() < 3){
-            yDifBin = "0"+yDifBin;
-        }
-
-        String ecteam = (team.equals(rc.getTeam().opponent())) ? "1" : "0";
-
-        return Integer.parseInt(xDifBin + yDifBin + ecteam);
-
+    // encodes location and team (and future items if necessary) into flag
+    static int encodeFlag(MapLocation target, Team team) throws GameActionException{
+        int location = 128 * (target.y % 128) + target.x % 128;
+        int teamType = 128 * 128 * ((team == rc.getTeam().opponent()) ? 1 : 0);
+        return location + teamType;
     }
+
+    // decodes flag's location (not to be confused with team)
+    static MapLocation decodeFlagLocation(int flag) throws GameActionException{
+        MapLocation loc = rc.getLocation();
+
+        int xDiff = (flag % 128) - (loc.x % 128);
+        int xMultiplier = (xDiff < 0) ? 1 : -1;
+        int delX = (Math.abs(xDiff) < 64) ? xDiff : xDiff + xMultiplier * 128;
+        int x = loc.x + delX;
+
+        int yDiff = ((flag / 128) % 128) - (loc.y % 128);
+        int yMultiplier = (yDiff < 0) ? 1 : -1;
+        int delY = (Math.abs(yDiff) < 64) ? yDiff : yDiff + yMultiplier * 128;
+        int y = loc.y + delY;
+
+        return new MapLocation(x, y);
+    }
+
+    // decodes flag's team (not to be confused with location)
+    static Team decodeFlagTeam (int flag) throws GameActionException{
+        int teamType = (flag / (128 * 128)) % 2;
+        return (teamType == 1) ? rc.getTeam().opponent() : Team.NEUTRAL;
+    }
+    // No more flags
+
 
 
     //run at top of code (runs first turn and records id of home EC
@@ -388,8 +395,6 @@ public strictfp class RobotPlayer {
 
         firstTurn = false;
         homeID = nearestEC.getID();
-//        System.out.println("My home ID is " + homeID);
-
     }
 
     //pathfinding Algorithm to move toward targetLoc variable
@@ -423,13 +428,7 @@ public strictfp class RobotPlayer {
         double max = 0.0;
         Direction bestDir = null;
         for (int i = 0; i < availDirs.length; i++) {
-            double currentPass = 0.0;
-            try {
-                currentPass = rc.sensePassability(rc.getLocation().add(availDirs[i]));
-            }catch(Exception e){
-                currentPass = 0.001;
-            }
-
+            double currentPass = rc.sensePassability(rc.getLocation().add(availDirs[i]));
             if (currentPass > max) {
                 bestDir = availDirs[i];
                 max = currentPass;
@@ -483,23 +482,12 @@ public strictfp class RobotPlayer {
 
     //checks home flag and gets any relevant information from it
     static void polCheckHomeFlag () throws GameActionException {
-        //System.out.println("Home ID:" + homeID);
         int flag = rc.getFlag(homeID);
-        //IMPLEMENT CODE TO GET FLAG INFORMATION
-        decodeLocation(flag);
-    }
 
-    static Team decodeLocation(int flag) throws GameActionException{
-        String flagS = Integer.toString(flag);
-        while(flagS.length() < 7) {
-            flagS = "0" + flagS;
-        }
-        int xDif = Integer.parseInt(flagS.substring(0, 3));
-        int yDif = Integer.parseInt(flagS.substring(3, 6));
-        int team = Integer.parseInt(flagS.substring(6));
+        // decodeLocation(flag);
 
-        targetLoc = new MapLocation(origin.x + xDif - 64, origin.y + yDif - 64);
-        return (team == 1) ? rc.getTeam().opponent() : Team.NEUTRAL;
+        // Updated to:
+        targetLoc = decodeFlagLocation(flag);
     }
 
 
@@ -593,7 +581,7 @@ public strictfp class RobotPlayer {
     static void runSlanderer () throws GameActionException {
 
         sendMovingFlag();
-        //setHome();
+        setHome();
 
         if (!rc.isReady()) {
             return;
