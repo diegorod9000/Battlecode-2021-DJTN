@@ -585,19 +585,43 @@ public strictfp class RobotPlayer {
     static void runSlanderer () throws GameActionException {
 
         sendMovingFlag();
-        setHome();
+        //setHome();
+        int self_id=rc.getID();
 
         if (!rc.isReady()) {
             return;
         }
         // detect if an enemy is within range
-        Team enemy = rc.getTeam().opponent();
+        Team color = rc.getTeam();
         int detectionRadius = rc.getType().detectionRadiusSquared;
-        RobotInfo[] threat = rc.senseNearbyRobots(detectionRadius, enemy);
-        if (threat.length == 0)
-            scatter();
-        else
+        RobotInfo[] friendly = rc.senseNearbyRobots(detectionRadius, color);
+        RobotInfo[] threat = rc.senseNearbyRobots(detectionRadius, color.opponent());
+        
+        HashSet<MapLocation> locations= new HashSet<MapLocation>();
+
+        for (RobotInfo friend: friendly){
+            int id=friend.getID();
+            if(rc.canGetFlag(id)&&rc.getFlag(id)!=0){
+                locations.add(decodeFlagLocation(rc.getFlag(id)));
+            }
+        }
+
+        if (threat.length!= 0){
             flee(detectionRadius, threat);
+        }
+        else if(locations.size()!=0){
+            if(rc.canGetFlag(self_id)&&rc.getFlag(self_id)!=0){
+                locations.add(decodeFlagLocation(rc.getFlag(self_id)));
+            }
+            avoidLocations(locations);
+
+        }
+        else if(rc.canGetFlag(self_id)&&rc.getFlag(self_id)!=0){
+            avoidLocation(decodeFlagLocation(rc.getFlag(self_id)));
+        }
+        else{
+            scatter();
+        }
 
     }
 
@@ -672,11 +696,66 @@ public strictfp class RobotPlayer {
 
     }
 
+    static void avoidLocation(MapLocation enemy) throws GameActionException
+    {
+        MapLocation position= rc.getLocation();
+        int yPriority = 0;
+        int xPriority = 0;
+        int xPos = position.x;
+        int yPos = position.y;
+        int radius = 64;
+
+        int threatX = enemy.x - xPos;
+        int threatY = enemy.y - yPos;
+        if (threatX < 0) {
+            xPriority -= (radius - threatX + 1);
+        } else if (threatX > 0) {
+            xPriority += (radius - threatX + 1);
+        }
+
+        if (threatY < 0) {
+            yPriority -= (radius - threatY + 1);
+        } else if (threatY > 0) {
+            yPriority += (radius - threatY + 1);
+        }
+
+        moveAway(xPriority, yPriority);
+    }
+
+    static void avoidLocations(HashSet<MapLocation> enemies) throws GameActionException
+    {
+        MapLocation position= rc.getLocation();
+        int yPriority = 0;
+        int xPriority = 0;
+        int xPos = position.x;
+        int yPos = position.y;
+        int radius = 64;
+
+        for (MapLocation enemy: enemies){
+            int threatX = enemy.x - xPos;
+            int threatY = enemy.y - yPos;
+            if (threatX < 0) {
+                xPriority -= (radius - threatX + 1);
+            } else if (threatX > 0) {
+                xPriority += (radius - threatX + 1);
+            }
+
+            if (threatY < 0) {
+                yPriority -= (radius - threatY + 1);
+            } else if (threatY > 0) {
+                yPriority += (radius - threatY + 1);
+            }
+        }
+
+        moveAway(xPriority, yPriority);
+    }
+
+    
+
     // Makes the robot run away from threats
-    static void flee ( int detectionRadius, RobotInfo[] threat) throws GameActionException
+    static void flee (int detectionRadius, RobotInfo[] threat) throws GameActionException
     {
         MapLocation spot = rc.getLocation();
-        // System.out.println("Threat Detected!");
         int xPos = spot.x;
         int yPos = spot.y;
         int yPriority = 0;
@@ -697,6 +776,11 @@ public strictfp class RobotPlayer {
                 yPriority += (detectionRadius - threatY + 1);
             }
         }
+        moveAway(xPriority, yPriority);
+    }
+
+    static void moveAway(int xPriority, int yPriority) throws GameActionException
+    {
         Direction[] paths;
         if (xPriority == 0) {
             if (yPriority == 0) {
@@ -822,7 +906,6 @@ public strictfp class RobotPlayer {
 
         }
     }
-
 
     static void runMuckraker () throws GameActionException {
 
