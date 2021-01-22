@@ -926,14 +926,17 @@ public strictfp class RobotPlayer {
 
     static void runMuckraker () throws GameActionException {
 
+        //flags and searching mechanisms
         sendMovingFlag();
         setHome();
 
         if (!rc.isReady())
             return;
+
         Team enemy = rc.getTeam().opponent();
         int actionRadius = rc.getType().actionRadiusSquared;
 
+        //Expose if possible
         for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, enemy)) {
             if (robot.type.canBeExposed()) {
                 // It's a slanderer... go get them!
@@ -945,6 +948,7 @@ public strictfp class RobotPlayer {
             }
         }
 
+        //split up the tasks based on modularity of ID (can be expanded)
         if(rc.getID() % 3 == 0){
             muckExploreEarly(Direction.NORTHEAST);
         }
@@ -953,16 +957,17 @@ public strictfp class RobotPlayer {
         }
         else{
             //consider adding something that goes toward the middle?
-
             tryMove(randomDirection());
         }
 
         //wallBounce();
     }
 
+
     static boolean[] wallsHit = {false,false,false,false};
     static boolean hitAny = false;
 
+    //code for moving early, takes in initial direction
     static void muckExploreEarly(Direction initial) throws GameActionException{
 
         //directions go north,east,south,west in that order for both arrays
@@ -1065,6 +1070,8 @@ public strictfp class RobotPlayer {
             }
         }
 
+        //currently, when they are done, just move randomly, can change based on flags
+        //hunt slanderers, etc.
         tryMove(randomDirection());
 
     }
