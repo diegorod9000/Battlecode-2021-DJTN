@@ -398,8 +398,7 @@ public strictfp class RobotPlayer {
     }
 
     //pathfinding Algorithm to move toward targetLoc variable
-    static void polPathFind () throws GameActionException {
-        Direction targetDir = rc.getLocation().directionTo(targetLoc);
+    static boolean pathfind (Direction targetDir) throws GameActionException {
         Direction[] availDirs = new Direction[3];
         availDirs[1] = targetDir;
 
@@ -449,7 +448,13 @@ public strictfp class RobotPlayer {
         //move in that direction
         if (rc.canMove(bestDir)) {
             rc.move(bestDir);
+            return true;
         }
+        else if(rc.canMove(targetDir)){
+            rc.move(targetDir);
+            return true;
+        }
+        return false;
 
     }
 
@@ -531,7 +536,7 @@ public strictfp class RobotPlayer {
         }
 
         if (origin != null && onMission() && !arrived(actionRadius)) {
-            polPathFind();
+            pathfind(rc.getLocation().directionTo(targetLoc));
             return;
         }
 
@@ -585,43 +590,19 @@ public strictfp class RobotPlayer {
     static void runSlanderer () throws GameActionException {
 
         sendMovingFlag();
-        //setHome();
-        int self_id=rc.getID();
+        setHome();
 
         if (!rc.isReady()) {
             return;
         }
         // detect if an enemy is within range
-        Team color = rc.getTeam();
+        Team enemy = rc.getTeam().opponent();
         int detectionRadius = rc.getType().detectionRadiusSquared;
-        RobotInfo[] friendly = rc.senseNearbyRobots(detectionRadius, color);
-        RobotInfo[] threat = rc.senseNearbyRobots(detectionRadius, color.opponent());
-        
-        HashSet<MapLocation> locations= new HashSet<MapLocation>();
-
-        for (RobotInfo friend: friendly){
-            int id=friend.getID();
-            if(rc.canGetFlag(id)&&rc.getFlag(id)!=0){
-                locations.add(decodeFlagLocation(rc.getFlag(id)));
-            }
-        }
-
-        if (threat.length!= 0){
-            flee(detectionRadius, threat);
-        }
-        else if(locations.size()!=0){
-            if(rc.canGetFlag(self_id)&&rc.getFlag(self_id)!=0){
-                locations.add(decodeFlagLocation(rc.getFlag(self_id)));
-            }
-            avoidLocations(locations);
-
-        }
-        else if(rc.canGetFlag(self_id)&&rc.getFlag(self_id)!=0){
-            avoidLocation(decodeFlagLocation(rc.getFlag(self_id)));
-        }
-        else{
+        RobotInfo[] threat = rc.senseNearbyRobots(detectionRadius, enemy);
+        if (threat.length == 0)
             scatter();
-        }
+        else
+            flee(detectionRadius, threat);
 
     }
 
@@ -696,66 +677,11 @@ public strictfp class RobotPlayer {
 
     }
 
-    static void avoidLocation(MapLocation enemy) throws GameActionException
-    {
-        MapLocation position= rc.getLocation();
-        int yPriority = 0;
-        int xPriority = 0;
-        int xPos = position.x;
-        int yPos = position.y;
-        int radius = 64;
-
-        int threatX = enemy.x - xPos;
-        int threatY = enemy.y - yPos;
-        if (threatX < 0) {
-            xPriority -= (radius - threatX + 1);
-        } else if (threatX > 0) {
-            xPriority += (radius - threatX + 1);
-        }
-
-        if (threatY < 0) {
-            yPriority -= (radius - threatY + 1);
-        } else if (threatY > 0) {
-            yPriority += (radius - threatY + 1);
-        }
-
-        moveAway(xPriority, yPriority);
-    }
-
-    static void avoidLocations(HashSet<MapLocation> enemies) throws GameActionException
-    {
-        MapLocation position= rc.getLocation();
-        int yPriority = 0;
-        int xPriority = 0;
-        int xPos = position.x;
-        int yPos = position.y;
-        int radius = 64;
-
-        for (MapLocation enemy: enemies){
-            int threatX = enemy.x - xPos;
-            int threatY = enemy.y - yPos;
-            if (threatX < 0) {
-                xPriority -= (radius - threatX + 1);
-            } else if (threatX > 0) {
-                xPriority += (radius - threatX + 1);
-            }
-
-            if (threatY < 0) {
-                yPriority -= (radius - threatY + 1);
-            } else if (threatY > 0) {
-                yPriority += (radius - threatY + 1);
-            }
-        }
-
-        moveAway(xPriority, yPriority);
-    }
-
-    
-
     // Makes the robot run away from threats
-    static void flee (int detectionRadius, RobotInfo[] threat) throws GameActionException
+    static void flee ( int detectionRadius, RobotInfo[] threat) throws GameActionException
     {
         MapLocation spot = rc.getLocation();
+        // System.out.println("Threat Detected!");
         int xPos = spot.x;
         int yPos = spot.y;
         int yPriority = 0;
@@ -776,11 +702,6 @@ public strictfp class RobotPlayer {
                 yPriority += (detectionRadius - threatY + 1);
             }
         }
-        moveAway(xPriority, yPriority);
-    }
-
-    static void moveAway(int xPriority, int yPriority) throws GameActionException
-    {
         Direction[] paths;
         if (xPriority == 0) {
             if (yPriority == 0) {
@@ -907,6 +828,7 @@ public strictfp class RobotPlayer {
         }
     }
 
+
     static void runMuckraker () throws GameActionException {
 
         sendMovingFlag();
@@ -928,9 +850,113 @@ public strictfp class RobotPlayer {
             }
         }
 
+        if(rc.getID() % 3 == 0){
+            muckExploreEarly(Direction.NORTHEAST);
+        }
+        else if (rc.getID() % 3 == 1){
+            muckExploreEarly(Direction.SOUTHWEST);
+        }
+        else{
+            //consider adding something that goes toward the middle?
+
+            tryMove(randomDirection());
+        }
+
+        //wallBounce();
+    }
+
+    static boolean[] wallsHit = {false,false,false,false};
+
+    static void muckExploreEarly(Direction initial) throws GameActionException{
+
+    //directions go north,east,south,west in that order for both arrays
+        MapLocation[] directionBounds = {
+                new MapLocation(rc.getLocation().x, rc.getLocation().y + 6),
+                new MapLocation(rc.getLocation().x + 6, rc.getLocation().y),
+                new MapLocation(rc.getLocation().x, rc.getLocation().y - 6),
+                new MapLocation(rc.getLocation().x - 6, rc.getLocation().y)
+        };
+
+        MapLocation[] directionBuffers = {
+                new MapLocation(rc.getLocation().x, rc.getLocation().y + 4),
+                new MapLocation(rc.getLocation().x + 4, rc.getLocation().y),
+                new MapLocation(rc.getLocation().x, rc.getLocation().y - 4),
+                new MapLocation(rc.getLocation().x - 4, rc.getLocation().y)
+        };
+
+        for(int i = 0; i < directionBounds.length;i++){
+            if(!rc.canDetectLocation(directionBounds[i])){
+                wallsHit[i] = true;
+            }
+            System.out.println(wallsHit[i] + " " + directionBounds[i].toString());
+        }
+
+        Direction dirToMove = null;
+
+        int j = 0;
+        for(int i = 0; i < wallsHit.length;i++){
+            if(dirToMove == null){
+                if(!wallsHit[i] && i < 4){
+                    dirToMove = directions[(i)*2];
+                    j = i;
+                }
+                else if(!wallsHit[i]){
+                    dirToMove = directions[0];
+                    j = 0;
+                }
+            }
+        }
+
+        boolean hitAny = false;
+        boolean hitAll = true;
+        for(int i = 0; i < wallsHit.length;i++){
+            if(wallsHit[i]){
+                hitAny = true;
+            }
+            else if(!wallsHit[i]){
+                hitAll = false;
+            }
+        }
 
 
-        wallBounce();
+        if(hitAll){
+            tryMove(randomDirection());
+            return;
+        }
+
+        if(hitAny){
+            System.out.println(dirToMove.toString());
+            MapLocation bufferLoc = null;
+            if(j > 0){
+                bufferLoc = directionBuffers[j-1];
+            }
+            else{
+                bufferLoc = directionBuffers[3];
+            }
+
+
+
+            if(!rc.canDetectLocation(bufferLoc)){
+                System.out.println("overwrite, moving " + directions[j*2+1]);
+               if(rc.canMove(directions[j*2+1])){
+                   rc.move(directions[j*2+1]);
+                   return;
+               }
+            }
+
+            if(pathfind(dirToMove)){
+                return;
+            }
+        }
+        else{
+            System.out.println("NorthEast");
+            if(pathfind(initial)){
+                return;
+            }
+        }
+
+        tryMove(randomDirection());
+
     }
 
 
