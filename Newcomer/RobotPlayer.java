@@ -4,6 +4,7 @@ import battlecode.common.*;
 //import sun.java2d.x11.X11SurfaceDataProxy;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 
 public strictfp class RobotPlayer {
