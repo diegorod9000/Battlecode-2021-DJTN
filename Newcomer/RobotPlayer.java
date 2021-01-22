@@ -1,4 +1,4 @@
-package Newcomer;
+package examplefuncsplaer;
 
 import battlecode.common.*;
 //import sun.java2d.x11.X11SurfaceDataProxy;
@@ -612,7 +612,7 @@ public strictfp class RobotPlayer {
         int detectionRadius = rc.getType().detectionRadiusSquared;
         RobotInfo[] friendly = rc.senseNearbyRobots(detectionRadius, color);
         RobotInfo[] threat = rc.senseNearbyRobots(detectionRadius, color.opponent());
-        
+
         HashSet<MapLocation> locations= new HashSet<MapLocation>();
 
         for (RobotInfo friend: friendly){
@@ -766,7 +766,7 @@ public strictfp class RobotPlayer {
         moveAway(xPriority, yPriority);
     }
 
-    
+
 
     // Makes the robot run away from threats
     static void flee (int detectionRadius, RobotInfo[] threat) throws GameActionException
@@ -958,7 +958,7 @@ public strictfp class RobotPlayer {
 
         //wallBounce();
     }
-    
+
     static boolean[] wallsHit = {false,false,false,false};
     static boolean hitAny = false;
 
@@ -1047,10 +1047,10 @@ public strictfp class RobotPlayer {
 
             if(!rc.canDetectLocation(bufferLoc)){
                 System.out.println("overwrite, moving " + directions[j*2+1]);
-               if(rc.canMove(directions[j*2+1])){
-                   rc.move(directions[j*2+1]);
-                   return;
-               }
+                if(rc.canMove(directions[j*2+1])){
+                    rc.move(directions[j*2+1]);
+                    return;
+                }
             }
 
             if(pathfind(dirToMove)){
