@@ -41,7 +41,6 @@ public strictfp class RobotPlayer {
 
         // System.out.println("I'm a " + rc.getType() + " and I just got created!");
 
-
         while (true) {
             turnCount += 1;
             // Try/catch blocks stop unhandled exceptions, which cause your robot to freeze
@@ -264,23 +263,6 @@ public strictfp class RobotPlayer {
         //quadratic, starts high and ends low, starts at 50% and ends at 30%
 
         return (-1.0 / 150 * turnCount + 50) / 100.0;
-    }
-
-    static void senseChildIDs() throws GameActionException {
-        RobotInfo[] nearbyChildren = rc.senseNearbyRobots(1, rc.getTeam());
-        boolean alreadyStored = false;
-        for (int i = 0; i < nearbyChildren.length; i++) {
-            alreadyStored = false;
-            for (int j = 0; j < childIDs.size(); j++) {
-                Integer converted = new Integer(nearbyChildren[i].getID());
-                if (childIDs.get(j).equals(converted)) {
-                    alreadyStored = true;
-                }
-            }
-            if (!alreadyStored) {
-                childIDs.add(nearbyChildren[i].getID());
-            }
-        }
     }
 
     static int robotCount;
