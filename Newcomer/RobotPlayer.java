@@ -397,9 +397,8 @@ public strictfp class RobotPlayer {
         homeID = nearestEC.getID();
     }
 
-    //pathfinding Algorithm to move toward targetLoc variable
-    static void polPathFind () throws GameActionException {
-        Direction targetDir = rc.getLocation().directionTo(targetLoc);
+    //pathfinding Algorithm to move toward targetDir (changed to pass in direction)
+    static boolean pathfind (Direction targetDir) throws GameActionException {
         Direction[] availDirs = new Direction[3];
         availDirs[1] = targetDir;
 
@@ -426,9 +425,12 @@ public strictfp class RobotPlayer {
 
         //find the highest passability amoung possible directions
         double max = 0.0;
+        double[] allPasses = new double[3];
+
         Direction bestDir = null;
         for (int i = 0; i < availDirs.length; i++) {
             double currentPass = rc.sensePassability(rc.getLocation().add(availDirs[i]));
+            allPasses[i] = currentPass;
             if (currentPass > max) {
                 bestDir = availDirs[i];
                 max = currentPass;
@@ -446,10 +448,24 @@ public strictfp class RobotPlayer {
             }
         }
 
+        //if all have same passability, move in target direction
+        if(allPasses[0] == allPasses[1] && allPasses[1] == allPasses[2]){
+            if(rc.canMove(targetDir)){
+                rc.move(targetDir);
+                return true;
+            }
+        }
+
         //move in that direction
         if (rc.canMove(bestDir)) {
             rc.move(bestDir);
+            return true;
         }
+        else if(rc.canMove(targetDir)){
+            rc.move(targetDir);
+            return true;
+        }
+        return false;
 
     }
 
@@ -531,7 +547,7 @@ public strictfp class RobotPlayer {
         }
 
         if (origin != null && onMission() && !arrived(actionRadius)) {
-            polPathFind();
+            pathfind(rc.getLocation().directionTo(targetLoc));
             return;
         }
 
@@ -596,7 +612,7 @@ public strictfp class RobotPlayer {
         int detectionRadius = rc.getType().detectionRadiusSquared;
         RobotInfo[] friendly = rc.senseNearbyRobots(detectionRadius, color);
         RobotInfo[] threat = rc.senseNearbyRobots(detectionRadius, color.opponent());
-        
+
         HashSet<MapLocation> locations= new HashSet<MapLocation>();
 
         for (RobotInfo friend: friendly){
@@ -750,7 +766,7 @@ public strictfp class RobotPlayer {
         moveAway(xPriority, yPriority);
     }
 
-    
+
 
     // Makes the robot run away from threats
     static void flee (int detectionRadius, RobotInfo[] threat) throws GameActionException
@@ -928,9 +944,128 @@ public strictfp class RobotPlayer {
             }
         }
 
+        if(rc.getID() % 3 == 0){
+            muckExploreEarly(Direction.NORTHEAST);
+        }
+        else if (rc.getID() % 3 == 1){
+            muckExploreEarly(Direction.SOUTHWEST);
+        }
+        else{
+            //consider adding something that goes toward the middle?
 
+            tryMove(randomDirection());
+        }
 
-        wallBounce();
+        //wallBounce();
+    }
+
+    static boolean[] wallsHit = {false,false,false,false};
+    static boolean hitAny = false;
+
+    static void muckExploreEarly(Direction initial) throws GameActionException{
+
+        //directions go north,east,south,west in that order for both arrays
+        MapLocation[] directionBounds = {
+                new MapLocation(rc.getLocation().x, rc.getLocation().y + 6),
+                new MapLocation(rc.getLocation().x + 6, rc.getLocation().y),
+                new MapLocation(rc.getLocation().x, rc.getLocation().y - 6),
+                new MapLocation(rc.getLocation().x - 6, rc.getLocation().y)
+        };
+
+        //buffers in same order to test if too close to the wall
+        MapLocation[] directionBuffers = {
+                new MapLocation(rc.getLocation().x, rc.getLocation().y + 4),
+                new MapLocation(rc.getLocation().x + 4, rc.getLocation().y),
+                new MapLocation(rc.getLocation().x, rc.getLocation().y - 4),
+                new MapLocation(rc.getLocation().x - 4, rc.getLocation().y)
+        };
+
+        //see if hit one of the walls
+        for(int i = 0; i < directionBounds.length;i++){
+            if(!rc.canDetectLocation(directionBounds[i])){
+                wallsHit[i] = true;
+            }
+            System.out.println(wallsHit[i] + " " + directionBounds[i].toString());
+        }
+
+        Direction dirToMove = null;
+
+        int j = 0;
+
+        //if northeast, run through array in proper order starting at north, and see if walls hit
+        if(initial.equals(Direction.NORTHEAST)){
+            for(int i = 0; i < wallsHit.length;i++){
+                if(dirToMove == null){
+                    if(!wallsHit[i]){
+                        dirToMove = directions[(i)*2];
+                        j = i;
+                    }
+                }
+            }
+            if(wallsHit[0] == true || wallsHit[1] == true){
+                hitAny = true;
+                wallsHit[2] = false;
+                wallsHit[3] = false;
+            }
+        }
+        //if southwest, need to start at south and run through array and loop back
+        else if(initial.equals(Direction.SOUTHWEST)){
+            for(int i = 2; i < wallsHit.length;i++){
+                if(dirToMove == null){
+                    if(!wallsHit[i]){
+                        dirToMove = directions[(i)*2];
+                        j = i;
+                    }
+                }
+            }
+            for(int i = 0; i < 2;i++){
+                if(dirToMove == null){
+                    if(!wallsHit[i]){
+                        dirToMove = directions[(i)*2];
+                        j = i;
+                    }
+                }
+            }
+            if(wallsHit[2] == true || wallsHit[3] == true){
+                hitAny = true;
+                wallsHit[0] = false;
+                wallsHit[1] = false;
+            }
+        }
+
+        //if hit any of them and not all of them, check if too close to buffer
+        //if so, move more inward, if not pathfind in that direction
+        if(hitAny && dirToMove != null){
+            System.out.println(dirToMove.toString());
+            MapLocation bufferLoc = null;
+            if(j > 0){
+                bufferLoc = directionBuffers[j-1];
+            }
+            else{
+                bufferLoc = directionBuffers[3];
+            }
+
+            if(!rc.canDetectLocation(bufferLoc)){
+                System.out.println("overwrite, moving " + directions[j*2+1]);
+                if(rc.canMove(directions[j*2+1])){
+                    rc.move(directions[j*2+1]);
+                    return;
+                }
+            }
+
+            if(pathfind(dirToMove)){
+                return;
+            }
+        }
+        else{
+            System.out.println(initial.toString());
+            if(pathfind(initial)){
+                return;
+            }
+        }
+
+        tryMove(randomDirection());
+
     }
 
 
