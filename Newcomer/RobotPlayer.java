@@ -1,4 +1,4 @@
-package examplefuncsplaer;
+package Newcomer;
 
 import battlecode.common.*;
 //import sun.java2d.x11.X11SurfaceDataProxy;
