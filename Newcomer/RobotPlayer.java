@@ -603,6 +603,10 @@ public strictfp class RobotPlayer {
             if(rc.canGetFlag(id)&&rc.getFlag(id)!=0){
                 locations.add(decodeFlagLocation(rc.getFlag(id)));
             }
+            
+            if(friend.getType()==RobotType.ENLIGHTENMENT_CENTER){
+                locations.add(friend.getLocation());
+            }
         }
 
         if (threat.length!= 0){
