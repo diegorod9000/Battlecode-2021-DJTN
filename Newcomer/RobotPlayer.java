@@ -329,7 +329,7 @@ public strictfp class RobotPlayer {
     }
 
     // encodes location and team (and future items if necessary) into flag
-    static int encodeFlag(MapLocation target, Team team) throws GameActionException{
+    static int encodeFlag(MapLocation target, Team team, boolean isDominated) throws GameActionException{
         int location = 128 * (target.y % 128) + target.x % 128;
         int teamType = 128 * 128 * ((team == rc.getTeam().opponent()) ? 1 : 0);
         int changeLocation = 128 * 128 * 2 * ((isDominated) ? 1 : 0);
