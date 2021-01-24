@@ -581,15 +581,14 @@ public strictfp class RobotPlayer {
     }
 
     // Slanderer AI
+    static RobotInfo[] rememberThreat;
     static void runSlanderer () throws GameActionException {
-
-        sendMovingFlag();
-        //setHome();
-        int self_id=rc.getID();
 
         if (!rc.isReady()) {
             return;
         }
+        sendMovingFlag();
+        int self_id=rc.getID();
         // detect if an enemy is within range
         Team color = rc.getTeam();
         int detectionRadius = rc.getType().detectionRadiusSquared;
@@ -603,27 +602,47 @@ public strictfp class RobotPlayer {
             if(rc.canGetFlag(id)&&rc.getFlag(id)!=0){
                 locations.add(decodeFlagLocation(rc.getFlag(id)));
             }
-            
-            if(friend.getType()==RobotType.ENLIGHTENMENT_CENTER){
+
+            //Gets out of the way if it's too close to an EC
+            if(friend.getType()==RobotType.ENLIGHTENMENT_CENTER&&friend.getLocation().isWithinDistanceSquared(rc.getLocation(),2)){
                 locations.add(friend.getLocation());
             }
         }
 
         if (threat.length!= 0){
-            flee(detectionRadius, threat);
+            //runs away from immediate threat and reembers it for 1 turn
+            flee(threat);
+            rememberThreat=threat;
         }
         else if(locations.size()!=0){
             if(rc.canGetFlag(self_id)&&rc.getFlag(self_id)!=0){
                 locations.add(decodeFlagLocation(rc.getFlag(self_id)));
             }
+            if(rememberThreat!=null){
+                for(RobotInfo robot: rememberThreat){
+                    locations.add(robot.getLocation());
+                }
+            }
             avoidLocations(locations);
-
+            rememberThreat=null;
         }
         else if(rc.canGetFlag(self_id)&&rc.getFlag(self_id)!=0){
-            avoidLocation(decodeFlagLocation(rc.getFlag(self_id)));
+            locations.add(decodeFlagLocation(rc.getFlag(self_id)));
+            if(rememberThreat!=null){
+                for(RobotInfo robot: rememberThreat){
+                    locations.add(robot.getLocation());
+                }
+            }
+            avoidLocations(locations);
+            rememberThreat=null;
+        }
+        else if(rememberThreat!=null){
+            flee(rememberThreat);
+            rememberThreat=null;
         }
         else{
             scatter();
+            rememberThreat=null;
         }
 
     }
@@ -699,32 +718,6 @@ public strictfp class RobotPlayer {
 
     }
 
-    static void avoidLocation(MapLocation enemy) throws GameActionException
-    {
-        MapLocation position= rc.getLocation();
-        int yPriority = 0;
-        int xPriority = 0;
-        int xPos = position.x;
-        int yPos = position.y;
-        int radius = 64;
-
-        int threatX = enemy.x - xPos;
-        int threatY = enemy.y - yPos;
-        if (threatX < 0) {
-            xPriority -= (radius - threatX + 1);
-        } else if (threatX > 0) {
-            xPriority += (radius - threatX + 1);
-        }
-
-        if (threatY < 0) {
-            yPriority -= (radius - threatY + 1);
-        } else if (threatY > 0) {
-            yPriority += (radius - threatY + 1);
-        }
-
-        moveAway(xPriority, yPriority);
-    }
-
     static void avoidLocations(HashSet<MapLocation> enemies) throws GameActionException
     {
         MapLocation position= rc.getLocation();
@@ -737,46 +730,45 @@ public strictfp class RobotPlayer {
         for (MapLocation enemy: enemies){
             int threatX = enemy.x - xPos;
             int threatY = enemy.y - yPos;
-            if (threatX < 0) {
-                xPriority -= (radius - threatX + 1);
-            } else if (threatX > 0) {
-                xPriority += (radius - threatX + 1);
+            if (threatX < 0) {//threat is to left
+                xPriority -= (radius + threatX);
+            } else if (threatX > 0) {//threat is to right
+                xPriority += (radius - threatX);
             }
 
-            if (threatY < 0) {
-                yPriority -= (radius - threatY + 1);
-            } else if (threatY > 0) {
-                yPriority += (radius - threatY + 1);
+            if (threatY < 0) {//threat is below
+                yPriority -= (radius + threatY);
+            } else if (threatY > 0) { //threat is above
+                yPriority += (radius - threatY);
             }
         }
 
         moveAway(xPriority, yPriority);
     }
 
-
-
     // Makes the robot run away from threats
-    static void flee (int detectionRadius, RobotInfo[] threat) throws GameActionException
+    static void flee (RobotInfo[] threat) throws GameActionException
     {
         MapLocation spot = rc.getLocation();
         int xPos = spot.x;
         int yPos = spot.y;
         int yPriority = 0;
         int xPriority = 0;
+        int radius = 64;
         for (RobotInfo robot : threat) {
             MapLocation threatPos = robot.getLocation();
             int threatX = threatPos.x - xPos;
             int threatY = threatPos.y - yPos;
             if (threatX < 0) {
-                xPriority -= (detectionRadius - threatX + 1);
+                xPriority -= (radius + threatX);
             } else if (threatX > 0) {
-                xPriority += (detectionRadius - threatX + 1);
+                xPriority += (radius - threatX);
             }
 
             if (threatY < 0) {
-                yPriority -= (detectionRadius - threatY + 1);
+                yPriority -= (radius + threatY);
             } else if (threatY > 0) {
-                yPriority += (detectionRadius - threatY + 1);
+                yPriority += (radius - threatY);
             }
         }
         moveAway(xPriority, yPriority);
