@@ -216,9 +216,9 @@ public strictfp class RobotPlayer {
     }
 
     static void buildAltSSPM(int influence) throws GameActionException {
-        //builds robots on a 4-round cycle, slanderes are built 2x as much as politicians an muckrakers
+        //builds robots on a cycle, slanderes are built 2x as much as politicians an muckrakers
 
-        int roundMod = rc.getRoundNum() % 14;
+        int roundMod = rc.getRoundNum() % 18;
         switch (roundMod) {
             case 0:
             case 1:
@@ -230,7 +230,7 @@ public strictfp class RobotPlayer {
                 break;
             case 4:
             case 5:
-                buildSlanderer(influence);
+                buildPolitician(influence);
                 break;
             case 6:
             case 7:
@@ -246,6 +246,14 @@ public strictfp class RobotPlayer {
                 break;
             case 12:
             case 13:
+                buildSlanderer(influence);
+                break;
+            case 14:
+            case 15:
+                buildPolitician(influence);
+                break;
+            case 16:
+            case 17:
                 buildSlanderer(influence);
                 break;
         }
