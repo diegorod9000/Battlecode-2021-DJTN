@@ -460,7 +460,7 @@ public strictfp class RobotPlayer {
     //run at top of code (runs first turn and records id of home EC
     //run at top of code (runs first turn and records id of home EC
     static void getHomeECID () throws GameActionException {
-        System.out.println(homeID);
+//         System.out.println(homeID);
         if (!firstTurn) {
             return;
         }
@@ -469,7 +469,7 @@ public strictfp class RobotPlayer {
         RobotInfo[] nearbyRobots = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared);
         RobotInfo nearestEC = null;
 
-        System.out.println("Nearby Robots: " + nearbyRobots.length);
+//         System.out.println("Nearby Robots: " + nearbyRobots.length);
         if (nearbyRobots.length == 0) {
             return;
         }
@@ -660,7 +660,7 @@ public strictfp class RobotPlayer {
         }
 
         if(targetLoc != null && !arrived(actionRadius)){
-            System.out.print(targetLoc.toString());
+//             System.out.print(targetLoc.toString());
             pathfind(rc.getLocation().directionTo(targetLoc));
         }
 
@@ -747,10 +747,10 @@ public strictfp class RobotPlayer {
         }
         else if(slanderHome!=null&&slanderHome.distanceSquaredTo(position)>(int)(trackRemainingTurns*1.1)&&slanderHome.distanceSquaredTo(position)>=detectionRadius)
         {
-            System.out.println("Going home");
+//             System.out.println("Going home");
             if(pathfind(position.directionTo(slanderHome)))
             {
-                System.out.println("moved");
+//                 System.out.println("moved");
             }
         }
         else if(locations.size()!=0){
