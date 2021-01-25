@@ -364,6 +364,11 @@ public strictfp class RobotPlayer {
         int defeated = (flag / (128 * 128 * 2)) % 2;
         return (defeated == 1);
     }
+
+    static boolean decodeFlagGoHome (int flag) throws GameActionException {
+        int gohome = (flag / (128 * 128 * 2 * 2)) % 2;
+        return (gohome == 1);
+    }
     // No more flags
 
 
@@ -494,7 +499,13 @@ public strictfp class RobotPlayer {
     //checks home flag and gets any relevant information from it
     static void polCheckHomeFlag () throws GameActionException {
         int flag = rc.getFlag(homeID);
-        if (!decodeFlagDefeated(flag)) targetLoc = decodeFlagLocation(flag);
+
+        if (decodeFlagGoHome(flag)){
+            targetLoc = decodeFlagLocation(flag);
+        } else if (!decodeFlagDefeated(flag)) {
+            targetLoc = decodeFlagLocation(flag);
+        }
+
     }
 
 
