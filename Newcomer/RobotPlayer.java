@@ -127,7 +127,7 @@ public strictfp class RobotPlayer {
 
 
         if (allFlags.size() > 0) {
-            System.out.println(decodeFlagLocation(allFlags.get(0)).toString());
+            //System.out.println(decodeFlagLocation(allFlags.get(0)).toString());
             if (rc.canSetFlag(allFlags.get(0).intValue())) {
                 rc.setFlag(allFlags.get(0).intValue());
             }
@@ -259,6 +259,8 @@ public strictfp class RobotPlayer {
         }
     }
 
+    static int lastRoundInf = 0;
+
     static void bidAndBuild() throws GameActionException {
         int roundNum = 	rc.getRoundNum();
         int myVotes = rc.getTeamVotes();
@@ -287,7 +289,7 @@ public strictfp class RobotPlayer {
         else if (roundNum < 1250)
             percentBid = 0.5;
 
-
+        lastRoundInf = rc.getInfluence();
 
         if (!(myVotes > 750 || (GameConstants.GAME_MAX_NUMBER_OF_ROUNDS - roundNum) < (751 - myVotes))) {
             if (roundNum < 300) {
@@ -313,8 +315,8 @@ public strictfp class RobotPlayer {
             if (enemiesNearby.length > 15)
                 buildPolitician((int)(Math.round(rc.getInfluence() * 0.3)));
             else
-                System.out.println("1:" + (int)(infToUse * (1.0 - percentBid)) + "2:" + rc.getInfluence());
-                buildAltSSPM((int)(infToUse * (1.0 - percentBid)));
+             //   System.out.println("1:" + (int)(infToUse * (1.0 - percentBid)) + "2:" + rc.getInfluence());
+            buildAltSSPM((int)(infToUse * (1.0 - percentBid)));
 
         }
     }
@@ -394,10 +396,10 @@ public strictfp class RobotPlayer {
         }
 
         boolean isDominated = false;
-        if (homeID != 0)
-            if (rc.canSenseLocation(decodeFlagLocation(rc.getFlag(homeID)))){
-                if(rc.senseRobotAtLocation(decodeFlagLocation(rc.getFlag(homeID))) != null){
-                    if (rc.senseRobotAtLocation(decodeFlagLocation(rc.getFlag(homeID))).getTeam() == rc.getTeam())
+        if (targetLoc != null)
+            if (rc.canSenseLocation(targetLoc)){
+                if(rc.senseRobotAtLocation(targetLoc) != null){
+                    if (rc.senseRobotAtLocation(targetLoc).getTeam() == rc.getTeam())
                         isDominated = true;
                 }
             }
@@ -463,9 +465,7 @@ public strictfp class RobotPlayer {
     //run at top of code (runs first turn and records id of home EC
     static void getHomeECID () throws GameActionException {
 //         System.out.println(homeID);
-        if (!firstTurn) {
-            return;
-        }
+
 
         Team friendly = rc.getTeam();
         RobotInfo[] nearbyRobots = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared);
@@ -475,6 +475,7 @@ public strictfp class RobotPlayer {
         if (nearbyRobots.length == 0) {
             return;
         }
+
         for (int i = 0; i < nearbyRobots.length; i++) {
             if (nearestEC == null && nearbyRobots[i].getTeam().equals(friendly) && nearbyRobots[i].getType().equals(RobotType.ENLIGHTENMENT_CENTER)) {
                 nearestEC = nearbyRobots[i];
@@ -627,7 +628,16 @@ public strictfp class RobotPlayer {
             }
         }
 
-
+        if(rc.getRoundNum() % 50 == 0 && rc.getRoundNum() > 500){
+            double rand = Math.random();
+            if(rand <= .2){
+                if(rc.senseNearbyRobots(actionRadius).length > 20){
+                    if(rc.canEmpower(actionRadius)){
+                        rc.empower(actionRadius);
+                    }
+                }
+            }
+        }
 
         boolean winning = true;
         boolean nearHome = false;
