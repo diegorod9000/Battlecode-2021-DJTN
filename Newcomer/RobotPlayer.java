@@ -310,7 +310,7 @@ public strictfp class RobotPlayer {
             //sends no flag if there are no enemies detected
             return;
         }
-        
+
         boolean isDominated = false;
         if (rc.canSenseLocation(decodeFlagLocation(rc.getFlag(homeID))))
             if (rc.senseRobotAtLocation(decodeFlagLocation(rc.getFlag(homeID))).getTeam() == rc.getTeam())
@@ -329,7 +329,7 @@ public strictfp class RobotPlayer {
     }
 
     // encodes location and team (and future items if necessary) into flag
-    static int encodeFlag(MapLocation target, Team team, boolean isDominated) throws GameActionException{
+    static int encodeFlag(MapLocation target, Team team, boolean isDominated) throws GameActionException {
         int location = 128 * (target.y % 128) + target.x % 128;
         int teamType = 128 * 128 * ((team == rc.getTeam().opponent()) ? 1 : 0);
         int changeLocation = 128 * 128 * 2 * ((isDominated) ? 1 : 0);
@@ -337,7 +337,7 @@ public strictfp class RobotPlayer {
     }
 
     // decodes flag's location (not to be confused with team)
-    static MapLocation decodeFlagLocation(int flag) throws GameActionException{
+    static MapLocation decodeFlagLocation(int flag) throws GameActionException {
         MapLocation loc = rc.getLocation();
 
         int xDiff = (flag % 128) - (loc.x % 128);
@@ -354,9 +354,14 @@ public strictfp class RobotPlayer {
     }
 
     // decodes flag's team (not to be confused with location)
-    static Team decodeFlagTeam (int flag) throws GameActionException{
+    static Team decodeFlagTeam (int flag) throws GameActionException {
         int teamType = (flag / (128 * 128)) % 2;
         return (teamType == 1) ? rc.getTeam().opponent() : Team.NEUTRAL;
+    }
+
+    static boolean decodeFlagDefeated (int flag) throws GameActionException {
+        int defeated = (flag / (128 * 128 * 2)) % 2;
+        return (defeated == 1);
     }
     // No more flags
 
@@ -488,11 +493,7 @@ public strictfp class RobotPlayer {
     //checks home flag and gets any relevant information from it
     static void polCheckHomeFlag () throws GameActionException {
         int flag = rc.getFlag(homeID);
-
-        // decodeLocation(flag);
-
-        // Updated to:
-        targetLoc = decodeFlagLocation(flag);
+        if (!decodeFlagDefeated(flag)) targetLoc = decodeFlagLocation(flag);
     }
 
 
