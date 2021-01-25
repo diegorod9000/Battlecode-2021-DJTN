@@ -259,8 +259,6 @@ public strictfp class RobotPlayer {
         }
     }
 
-    static int lastRoundInf = 0;
-
     static void bidAndBuild() throws GameActionException {
         int roundNum = 	rc.getRoundNum();
         int myVotes = rc.getTeamVotes();
@@ -269,6 +267,8 @@ public strictfp class RobotPlayer {
         int infToUse = lastRoundInf - rc.getInfluence();
         int toChange = 0;
         double percentMade = infToUse * 1.0 / lastRoundInf;
+
+        if (infToUse < 0) {infToUse = (int)(rc.getInfluence() * 0.25);}
 
         if (percentMade > 1) {
             toChange = -1 * (int)(infToUse * 0.25); //save
@@ -305,7 +305,7 @@ public strictfp class RobotPlayer {
 
         RobotInfo[] enemiesNearby = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared, rc.getTeam().opponent());
         if (roundNum < 300) {
-            if (enemiesNearby.length > 5 || (roundNum >= 15 && roundNum <= 25))
+            if (enemiesNearby.length > 2 || (roundNum >= 15 && roundNum <= 25) || (roundNum >= 150 && roundNum <= 175))
                 buildPolitician((int)(Math.round(rc.getInfluence() * 0.3)));
             else
                 buildEarly();
@@ -313,7 +313,9 @@ public strictfp class RobotPlayer {
             if (enemiesNearby.length > 15)
                 buildPolitician((int)(Math.round(rc.getInfluence() * 0.3)));
             else
-                buildAltSSPM((int)(infToUse * (1 - percentBid)));
+                System.out.println("1:" + (int)(infToUse * (1.0 - percentBid)) + "2:" + rc.getInfluence());
+                buildAltSSPM((int)(infToUse * (1.0 - percentBid)));
+
         }
     }
 
