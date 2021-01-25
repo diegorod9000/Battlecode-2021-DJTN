@@ -174,26 +174,97 @@ public strictfp class RobotPlayer {
         return findDirection(++num);
     }
 
-    static void buildAlternating(int influence) throws GameActionException {
+    static void buildAltSSPM(int influence) throws GameActionException {
         //builds robots on a 4-round cycle, slanderes are built 2x as much as politicians an muckrakers
-        //direction is automatically north but this can be changed, influence as well
 
-        int roundMod = turnCount % 12;
+        int roundMod = rc.getRoundNum() % 14;
         switch (roundMod) {
             case 0:
-                buildMuckraker();
-                break;
-            case 2:
-            case 4:
-                buildPolitician(influence);
-                break;
-            case 6:
-                buildMuckraker();
-                break;
-            case 10:
+            case 1:
                 buildSlanderer(influence);
                 break;
+            case 2:
+            case 3:
+                buildPolitician(influence);
+                break;
+            case 4:
+            case 5:
+                buildSlanderer(influence);
+                break;
+            case 6:
+            case 7:
+                buildMuckraker();
+                break;
+            case 8:
+            case 9:
+                buildSlanderer(influence);
+                break;
+            case 10:
+            case 11:
+                buildPolitician(influence);
+                break;
+            case 12:
+            case 13:
+                buildSlanderer(influence);
+                break;
+        }
+    }
+    
+        static int lastRoundInf = 0;
 
+    static void bidAndBuild() throws GameActionException {
+        int roundNum = 	rc.getRoundNum();
+        int myVotes = rc.getTeamVotes();
+
+
+        int infToUse = lastRoundInf - rc.getInfluence();
+        int toChange = 0;
+        double percentMade = infToUse * 1.0 / lastRoundInf;
+
+        if (percentMade > 1) {
+            toChange = -1 * (int)(infToUse * 0.25); //save
+        } else if (percentMade < 0.05) {
+            toChange = (int)(lastRoundInf * 0.1);  //take
+        }
+        infToUse += toChange;
+
+        double percentBid = 0;
+        if (roundNum < 500)
+            percentBid = 0.25;
+        else if (roundNum < 750)
+            percentBid = 0.35;
+        else if (roundNum < 1000)
+            percentBid = 0.45;
+        else if (roundNum < 1250)
+            percentBid = 0.5;
+
+
+
+        if (!(myVotes > 750 || (GameConstants.GAME_MAX_NUMBER_OF_ROUNDS - roundNum) < (751 - myVotes))) {
+            if (roundNum < 300) {
+                if (rc.canBid(1))
+                    rc.bid(1);
+            } else if (roundNum < 1250) {
+                if (rc.canBid((int)(infToUse * percentBid)))
+                    rc.bid((int)(infToUse * percentBid));
+                else
+                    rc.bid((int)(rc.getInfluence() * 0.1));
+            } else {
+                rc.bid((int)(rc.getInfluence() * 0.40));
+            }
+        }
+
+        RobotInfo[] enemiesNearby = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared, rc.getTeam().opponent());
+        if (roundNum < 300) {
+            if (enemiesNearby.length > 5)
+                buildPolitician((int)(Math.round(rc.getInfluence() * 0.3)));
+            else
+                buildEarly();
+        } else if (roundNum < 1200) {
+            if (enemiesNearby.length > 15)
+                buildPolitician((int)(Math.round(rc.getInfluence() * 0.3)));
+            else
+                buildAltSSPM((int)(infToUse * (1 - percentBid)));
         }
     }
 
@@ -241,57 +312,12 @@ public strictfp class RobotPlayer {
         }
     }
 
-    static void bidPercent(double percent) throws GameActionException {
-        //bid a certain percent of the center's influence
-
-        int biddingInfluence = (int) (Math.round(rc.getInfluence() * percent));
-
-        if (rc.canBid(Math.round(biddingInfluence))) {
-            rc.bid(Math.round(biddingInfluence));
-        }
-    }
-
-    static double calcQuadBidPercent() {
-        //function that determines percent of influence used to bid, based on round number
-        //quadratic, starts low and ends higher, starts at 20% and ends at 50%
-
-        return (1.0 / 450000 * Math.pow(turnCount, 2) - 1.0 / 300 * turnCount + 20) / 100.0;
-    }
-
-    static double calcLinearBuildPercent() {
-        //function that determines percent of influence used to build robots, based on round number
-        //quadratic, starts high and ends low, starts at 50% and ends at 30%
-
-        return (-1.0 / 150 * turnCount + 50) / 100.0;
-    }
-
     static int robotCount;
 
     static void runEnlightenmentCenter() throws GameActionException {
 
-        // building stages
-
-        RobotInfo[] enemiesNearby = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared, rc.getTeam().opponent());
-        if (turnCount <= 75 && enemiesNearby.length > 0 || enemiesNearby.length >= 15) {
-            //builds politicians if there are lots of opponents nearby
-            buildPolitician((int)(Math.round(rc.getInfluence() * calcLinearBuildPercent())));
-        } else if (turnCount<= 100) {
-            buildEarly();
-        } else {
-            buildAlternating((int)(Math.round(rc.getInfluence() * calcLinearBuildPercent())));
-        }
-
-        // bidding stages
-        if (turnCount <= 300) {
-            if (rc.canBid(1))
-                rc.bid(1);
-        } else if (turnCount > GameConstants.GAME_MAX_NUMBER_OF_ROUNDS - 25) {
-            rc.bid(rc.getInfluence());
-//        } else if (turnCount > GameConstants.GAME_MAX_NUMBER_OF_ROUNDS * 2/3) {
-//            rc.bid(10);
-        } else {
-            bidPercent(calcQuadBidPercent());
-        }
+        //bidding and building
+        bidAndBuild();
 
         //flags
         getAndSendFlags();
