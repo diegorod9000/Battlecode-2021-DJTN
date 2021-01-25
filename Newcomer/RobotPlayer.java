@@ -1070,7 +1070,7 @@ public strictfp class RobotPlayer {
             tryMove(randomDirection());
         }
 
-        if(rc.getRoundNum() > 500 && rc.canGetFlag(homeID)){
+        if(rc.getRoundNum() > 500 && rc.canGetFlag(homeID) && rc.getID() % 2 == 0) {
             if(decodeFlagTeam(rc.getFlag(homeID)).equals(rc.getTeam().opponent())){
                 pathfind(rc.getLocation().directionTo(decodeFlagLocation(rc.getFlag(homeID))));
             }
