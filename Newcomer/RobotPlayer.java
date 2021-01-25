@@ -312,9 +312,10 @@ public strictfp class RobotPlayer {
         }
 
         boolean isDominated = false;
-        if (rc.canSenseLocation(decodeFlagLocation(rc.getFlag(homeID))))
-            if (rc.senseRobotAtLocation(decodeFlagLocation(rc.getFlag(homeID))).getTeam() == rc.getTeam())
-                isDominated = true;
+        if (homeID != 0)
+            if (rc.canSenseLocation(decodeFlagLocation(rc.getFlag(homeID))))
+                if (rc.senseRobotAtLocation(decodeFlagLocation(rc.getFlag(homeID))).getTeam() == rc.getTeam())
+                    isDominated = true;
 
         int flagToBeSet = 0;
         for(int i = 0; i < nearbyRobots.length;i++){
@@ -475,7 +476,7 @@ public strictfp class RobotPlayer {
     }
 
     //checks if arrived at target, if so empowers and then ends mission (targetLoc = null)
-    static boolean arrived ( int actionRadius) throws GameActionException {
+    static boolean arrived (int actionRadius) throws GameActionException {
 
         //NEED TO MAKE SURE ITS STILL NUETRAL
         if (rc.getLocation().distanceSquaredTo(targetLoc) < actionRadius) {
