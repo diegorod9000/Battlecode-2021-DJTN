@@ -117,7 +117,7 @@ public strictfp class RobotPlayer {
         for (Integer ID : friendlyIDs) {
             if (rc.canGetFlag(ID)) {
                 if (rc.getFlag(ID) != 0) {
-                        newFlags.add(rc.getFlag(ID));
+                    newFlags.add(rc.getFlag(ID));
                 }
             }
         }
@@ -151,7 +151,7 @@ public strictfp class RobotPlayer {
             }
         }
     }
-    
+
     static ArrayList<Integer> sortFlags(ArrayList<Integer> allFlags) throws GameActionException {
         ArrayList<Integer> nuetralECs = new ArrayList<>();
         ArrayList<Integer> enemyECs = new ArrayList<>();
@@ -174,7 +174,7 @@ public strictfp class RobotPlayer {
 
         return nuetralECs;
     }
-    
+
     static ArrayList<Integer> sortByDistance (ArrayList<Integer> array) throws GameActionException{
         for (int i = 1; i < array.size(); i++) {
             int current = decodeFlagLocation(array.get(i)).distanceSquaredTo(rc.getLocation());
@@ -262,8 +262,8 @@ public strictfp class RobotPlayer {
                 break;
         }
     }
-    
-        static int lastRoundInf = 0;
+
+    static int lastRoundInf = 0;
 
     static void bidAndBuild() throws GameActionException {
         int roundNum = 	rc.getRoundNum();
@@ -382,9 +382,6 @@ public strictfp class RobotPlayer {
     static void sendMovingFlag() throws GameActionException {
         //for moving robots if they see an enemy, reports the enemy's location and ID in flag
 
-        if(!rc.canGetFlag(homeID)){
-            return;
-        }
         RobotInfo[] nearbyRobots = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared);
         int intID = 0;
 
@@ -462,9 +459,11 @@ public strictfp class RobotPlayer {
     //run at top of code (runs first turn and records id of home EC
     //run at top of code (runs first turn and records id of home EC
     static void getHomeECID () throws GameActionException {
+        System.out.println(homeID);
         if (!firstTurn) {
             return;
         }
+
         Team friendly = rc.getTeam();
         RobotInfo[] nearbyRobots = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared);
         RobotInfo nearestEC = null;
@@ -604,7 +603,7 @@ public strictfp class RobotPlayer {
     }
 
 
-//Politician AI
+    //Politician AI
     static void runPolitician () throws GameActionException {
 
         sendMovingFlag();
@@ -655,11 +654,12 @@ public strictfp class RobotPlayer {
                 targetLoc = null;
             }
             else if (flag != 0){
-                targetLoc = decodeFlagLocation(flag);
+                polCheckHomeFlag();
             }
         }
 
         if(targetLoc != null && !arrived(actionRadius)){
+            System.out.print(targetLoc.toString());
             pathfind(rc.getLocation().directionTo(targetLoc));
         }
 
@@ -1108,7 +1108,7 @@ public strictfp class RobotPlayer {
             if(!rc.canDetectLocation(directionBounds[i])){
                 wallsHit[i] = true;
             }
-            System.out.println(wallsHit[i] + " " + directionBounds[i].toString());
+          //  System.out.println(wallsHit[i] + " " + directionBounds[i].toString());
         }
 
         Direction dirToMove = null;
@@ -1159,7 +1159,7 @@ public strictfp class RobotPlayer {
         //if hit any of them and not all of them, check if too close to buffer
         //if so, move more inward, if not pathfind in that direction
         if(hitAny && dirToMove != null){
-            System.out.println(dirToMove.toString());
+            //System.out.println(dirToMove.toString());
             MapLocation bufferLoc = null;
             if(j > 0){
                 bufferLoc = directionBuffers[j-1];
@@ -1169,7 +1169,7 @@ public strictfp class RobotPlayer {
             }
 
             if(!rc.canDetectLocation(bufferLoc)){
-                System.out.println("overwrite, moving " + directions[j*2+1]);
+               // System.out.println("overwrite, moving " + directions[j*2+1]);
                 if(rc.canMove(directions[j*2+1])){
                     rc.move(directions[j*2+1]);
                     return;
@@ -1181,7 +1181,7 @@ public strictfp class RobotPlayer {
             }
         }
         else{
-            System.out.println(initial.toString());
+          //  System.out.println(initial.toString());
             if(pathfind(initial)){
                 return;
             }
@@ -1262,9 +1262,6 @@ public strictfp class RobotPlayer {
      *
      * @return a random RobotType
      */
-    static RobotType randomSpawnableRobotType () {
-        return spawnableRobot[(int) (Math.random() * spawnableRobot.length)];
-    }
 
     /**
      * Attempts to move in a given direction.
