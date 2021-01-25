@@ -82,18 +82,6 @@ public strictfp class RobotPlayer {
     static ArrayList<Integer> friendlyIDs = new ArrayList<Integer>();
     static ArrayList<Integer> allFlags = new ArrayList<Integer>();
 
-    static void setHome() throws GameActionException {
-        if (origin == null) {
-            Team teammate = rc.getTeam();
-            int actionRadius = rc.getType().actionRadiusSquared;
-            for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, teammate)) {
-                if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
-                    origin = robot.getLocation();
-                }
-            }
-        }
-        return;
-    }
 
     static void getAndSendFlags() throws GameActionException {
 
@@ -1050,7 +1038,6 @@ public strictfp class RobotPlayer {
 
         //flags and searching mechanisms
         sendMovingFlag();
-        setHome();
 
         if (!rc.isReady())
             return;
@@ -1070,6 +1057,7 @@ public strictfp class RobotPlayer {
             }
         }
 
+
         //split up the tasks based on modularity of ID (can be expanded)
         if(rc.getID() % 3 == 0){
             muckExploreEarly(Direction.NORTHEAST);
@@ -1080,6 +1068,12 @@ public strictfp class RobotPlayer {
         else{
             //consider adding something that goes toward the middle?
             tryMove(randomDirection());
+        }
+
+        if(rc.getRoundNum() > 500 && rc.canGetFlag(homeID)){
+            if(decodeFlagTeam(rc.getFlag(homeID)).equals(rc.getTeam().opponent())){
+                pathfind(rc.getLocation().directionTo(decodeFlagLocation(rc.getFlag(homeID))));
+            }
         }
 
         //wallBounce();
@@ -1113,7 +1107,7 @@ public strictfp class RobotPlayer {
             if(!rc.canDetectLocation(directionBounds[i])){
                 wallsHit[i] = true;
             }
-          //  System.out.println(wallsHit[i] + " " + directionBounds[i].toString());
+            //  System.out.println(wallsHit[i] + " " + directionBounds[i].toString());
         }
 
         Direction dirToMove = null;
@@ -1174,7 +1168,7 @@ public strictfp class RobotPlayer {
             }
 
             if(!rc.canDetectLocation(bufferLoc)){
-               // System.out.println("overwrite, moving " + directions[j*2+1]);
+                // System.out.println("overwrite, moving " + directions[j*2+1]);
                 if(rc.canMove(directions[j*2+1])){
                     rc.move(directions[j*2+1]);
                     return;
@@ -1186,7 +1180,7 @@ public strictfp class RobotPlayer {
             }
         }
         else{
-          //  System.out.println(initial.toString());
+            //  System.out.println(initial.toString());
             if(pathfind(initial)){
                 return;
             }
