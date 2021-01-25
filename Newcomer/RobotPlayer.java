@@ -310,11 +310,16 @@ public strictfp class RobotPlayer {
             //sends no flag if there are no enemies detected
             return;
         }
+        
+        boolean isDominated = false;
+        if (rc.canSenseLocation(decodeFlagLocation(rc.getFlag(homeID))))
+            if (rc.senseRobotAtLocation(decodeFlagLocation(rc.getFlag(homeID))).getTeam() == rc.getTeam())
+                isDominated = true;
 
         int flagToBeSet = 0;
         for(int i = 0; i < nearbyRobots.length;i++){
             if(nearbyRobots[i].getType() == RobotType.ENLIGHTENMENT_CENTER && nearbyRobots[i].getTeam() != rc.getTeam()){
-                flagToBeSet = encodeFlag(nearbyRobots[i].getLocation(),nearbyRobots[i].getTeam());
+                flagToBeSet = encodeFlag(nearbyRobots[i].getLocation(),nearbyRobots[i].getTeam(), isDominated);
                 if(rc.canSetFlag(flagToBeSet)) {
                     rc.setFlag(flagToBeSet);
                     return;
@@ -324,10 +329,11 @@ public strictfp class RobotPlayer {
     }
 
     // encodes location and team (and future items if necessary) into flag
-    static int encodeFlag(MapLocation target, Team team) throws GameActionException{
+    static int encodeFlag(MapLocation target, Team team, boolean isDominated) throws GameActionException{
         int location = 128 * (target.y % 128) + target.x % 128;
         int teamType = 128 * 128 * ((team == rc.getTeam().opponent()) ? 1 : 0);
-        return location + teamType;
+        int changeLocation = 128 * 128 * 2 * ((isDominated) ? 1 : 0);
+        return location + teamType + changeLocation;
     }
 
     // decodes flag's location (not to be confused with team)
