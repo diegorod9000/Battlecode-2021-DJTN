@@ -309,7 +309,7 @@ public strictfp class RobotPlayer {
 
         RobotInfo[] enemiesNearby = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared, rc.getTeam().opponent());
         if (roundNum < 300) {
-            if (enemiesNearby.length > 5)
+            if (enemiesNearby.length > 5 || (roundNum >= 15 && roundNum <= 25))
                 buildPolitician((int)(Math.round(rc.getInfluence() * 0.3)));
             else
                 buildEarly();
@@ -324,10 +324,15 @@ public strictfp class RobotPlayer {
     static void buildEarly() throws GameActionException {
         // builds initial robots in specified manner
         // slanderers and muckrakers only
-        if (rc.getInfluence() >= 130)
-            buildSlanderer(130);
-        else
-            buildMuckraker();
+        if (rc.getRoundNum() < 50) {
+            if (rc.getInfluence() >= 130)
+                buildSlanderer(130);
+        } else {
+            if (rc.getInfluence() >= 532)
+                buildSlanderer(532);
+            else
+                buildMuckraker();
+        }
     }
 
     static void buildPolitician(int influence) throws GameActionException {
