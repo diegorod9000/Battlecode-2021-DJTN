@@ -429,7 +429,10 @@ public strictfp class RobotPlayer {
 
         Direction bestDir = null;
         for (int i = 0; i < availDirs.length; i++) {
-            double currentPass = rc.sensePassability(rc.getLocation().add(availDirs[i]));
+            double currentPass=0.0;
+            if(rc.canSenseLocation(rc.getLocation().add(availDirs[i]))){
+                currentPass = rc.sensePassability(rc.getLocation().add(availDirs[i]));
+            }
             allPasses[i] = currentPass;
             if (currentPass > max) {
                 bestDir = availDirs[i];
@@ -601,8 +604,10 @@ public strictfp class RobotPlayer {
 
     // Slanderer AI
     static RobotInfo[] rememberThreat;
+    static int trackRemainingTurns = 300;
+    static MapLocation slanderHome = null;
     static void runSlanderer () throws GameActionException {
-
+        trackRemainingTurns--;
         if (!rc.isReady()) {
             return;
         }
@@ -610,6 +615,8 @@ public strictfp class RobotPlayer {
         int self_id=rc.getID();
         // detect if an enemy is within range
         Team color = rc.getTeam();
+        MapLocation position = rc.getLocation();
+
         int detectionRadius = rc.getType().detectionRadiusSquared;
         RobotInfo[] friendly = rc.senseNearbyRobots(detectionRadius, color);
         RobotInfo[] threat = rc.senseNearbyRobots(detectionRadius, color.opponent());
@@ -622,8 +629,11 @@ public strictfp class RobotPlayer {
                 locations.add(decodeFlagLocation(rc.getFlag(id)));
             }
 
+            if(friend.getType()==RobotType.ENLIGHTENMENT_CENTER){
+                slanderHome=friend.getLocation();
+            }
             //Gets out of the way if it's too close to an EC
-            if(friend.getType()==RobotType.ENLIGHTENMENT_CENTER&&friend.getLocation().isWithinDistanceSquared(rc.getLocation(),2)){
+            if(friend.getType()==RobotType.ENLIGHTENMENT_CENTER&&friend.getLocation().isWithinDistanceSquared(position,2)){
                 locations.add(friend.getLocation());
             }
         }
@@ -633,7 +643,16 @@ public strictfp class RobotPlayer {
             flee(threat);
             rememberThreat=threat;
         }
+        else if(slanderHome!=null&&slanderHome.distanceSquaredTo(position)>(int)(trackRemainingTurns*1.1)&&slanderHome.distanceSquaredTo(position)>=detectionRadius)
+        {
+            System.out.println("Going home");
+            if(pathfind(position.directionTo(slanderHome)))
+            {
+                System.out.println("moved");
+            }
+        }
         else if(locations.size()!=0){
+            //avoids dangerous locations
             if(rc.canGetFlag(self_id)&&rc.getFlag(self_id)!=0){
                 locations.add(decodeFlagLocation(rc.getFlag(self_id)));
             }
