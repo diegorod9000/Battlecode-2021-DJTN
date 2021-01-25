@@ -117,24 +117,77 @@ public strictfp class RobotPlayer {
         for (Integer ID : friendlyIDs) {
             if (rc.canGetFlag(ID)) {
                 if (rc.getFlag(ID) != 0) {
-                    newFlags.add(rc.getFlag(ID));
+                        newFlags.add(rc.getFlag(ID));
                 }
             }
         }
 
 
         for (Integer newFlag : newFlags) {
-            if (!allFlags.contains(newFlag)) {
+            if(decodeFlagDefeated(newFlag)){
+                Integer flagToRemove = encodeFlag(decodeFlagLocation(newFlag), decodeFlagTeam(newFlag), false);
+                if(allFlags.contains(flagToRemove)){
+                    allFlags.remove(flagToRemove);
+                }
+            }
+            else if (!allFlags.contains(newFlag)) {
                 allFlags.add(newFlag);
             }
         }
 
+        allFlags = sortFlags(allFlags);
+
 
         if (allFlags.size() > 0) {
+            System.out.println(decodeFlagLocation(allFlags.get(0)).toString());
             if (rc.canSetFlag(allFlags.get(0).intValue())) {
                 rc.setFlag(allFlags.get(0).intValue());
             }
         }
+        else{
+            int cancelFlag = 9999999;
+            if(rc.canSetFlag(cancelFlag)){
+                rc.setFlag(cancelFlag);
+            }
+        }
+    }
+    
+    static ArrayList<Integer> sortFlags(ArrayList<Integer> allFlags) throws GameActionException {
+        ArrayList<Integer> nuetralECs = new ArrayList<>();
+        ArrayList<Integer> enemyECs = new ArrayList<>();
+
+        for(int i = 0; i < allFlags.size(); i++){
+            if(decodeFlagTeam(allFlags.get(i)) == Team.NEUTRAL){
+                nuetralECs.add(allFlags.get(i));
+            }
+            else if(decodeFlagTeam(allFlags.get(i)) == rc.getTeam().opponent()){
+                enemyECs.add(allFlags.get(i));
+            }
+        }
+
+        nuetralECs = sortByDistance(nuetralECs);
+        enemyECs = sortByDistance(enemyECs);
+
+        for(int i = 0; i < enemyECs.size();i++){
+            nuetralECs.add(enemyECs.get(i));
+        }
+
+        return nuetralECs;
+    }
+    
+    static ArrayList<Integer> sortByDistance (ArrayList<Integer> array) throws GameActionException{
+        for (int i = 1; i < array.size(); i++) {
+            int current = decodeFlagLocation(array.get(i)).distanceSquaredTo(rc.getLocation());
+            int j = i - 1;
+            while(j >= 0 && current < decodeFlagLocation(array.get(j)).distanceSquaredTo(rc.getLocation())) {
+                array.set(j+1, array.get(j));
+                j--;
+            }
+            // at this point we've exited, so j is either -1
+            // or it's at the first element where current >= a[j]
+            array.set(j+1,current);
+        }
+        return array;
     }
 
     static Direction findDirection(int num) {
@@ -329,6 +382,9 @@ public strictfp class RobotPlayer {
     static void sendMovingFlag() throws GameActionException {
         //for moving robots if they see an enemy, reports the enemy's location and ID in flag
 
+        if(!rc.canGetFlag(homeID)){
+            return;
+        }
         RobotInfo[] nearbyRobots = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared);
         int intID = 0;
 
@@ -339,9 +395,12 @@ public strictfp class RobotPlayer {
 
         boolean isDominated = false;
         if (homeID != 0)
-            if (rc.canSenseLocation(decodeFlagLocation(rc.getFlag(homeID))))
-                if (rc.senseRobotAtLocation(decodeFlagLocation(rc.getFlag(homeID))).getTeam() == rc.getTeam())
-                    isDominated = true;
+            if (rc.canSenseLocation(decodeFlagLocation(rc.getFlag(homeID)))){
+                if(rc.senseRobotAtLocation(decodeFlagLocation(rc.getFlag(homeID))) != null){
+                    if (rc.senseRobotAtLocation(decodeFlagLocation(rc.getFlag(homeID))).getTeam() == rc.getTeam())
+                        isDominated = true;
+                }
+            }
 
         int flagToBeSet = 0;
         for(int i = 0; i < nearbyRobots.length;i++){
@@ -353,6 +412,7 @@ public strictfp class RobotPlayer {
                 }
             }
         }
+        rc.setFlag(0);
     }
 
     // encodes location and team (and future items if necessary) into flag
@@ -400,15 +460,19 @@ public strictfp class RobotPlayer {
 
 
     //run at top of code (runs first turn and records id of home EC
+    //run at top of code (runs first turn and records id of home EC
     static void getHomeECID () throws GameActionException {
         if (!firstTurn) {
             return;
         }
         Team friendly = rc.getTeam();
-        RobotInfo[] nearbyRobots = rc.senseNearbyRobots();
+        RobotInfo[] nearbyRobots = rc.senseNearbyRobots(rc.getType().detectionRadiusSquared);
         RobotInfo nearestEC = null;
 
         System.out.println("Nearby Robots: " + nearbyRobots.length);
+        if (nearbyRobots.length == 0) {
+            return;
+        }
         for (int i = 0; i < nearbyRobots.length; i++) {
             if (nearestEC == null && nearbyRobots[i].getTeam().equals(friendly) && nearbyRobots[i].getType().equals(RobotType.ENLIGHTENMENT_CENTER)) {
                 nearestEC = nearbyRobots[i];
@@ -420,7 +484,9 @@ public strictfp class RobotPlayer {
         }
 
         firstTurn = false;
-        homeID = nearestEC.getID();
+        if (nearestEC != null) {
+            homeID = nearestEC.getID();
+        }
     }
 
     //pathfinding Algorithm to move toward targetDir (changed to pass in direction)
@@ -538,12 +604,10 @@ public strictfp class RobotPlayer {
     }
 
 
-    //Politician AI
+//Politician AI
     static void runPolitician () throws GameActionException {
-        if(origin != null){
-            sendMovingFlag();
-        }
-        setHome();
+
+        sendMovingFlag();
 
         //basic variables
         Team enemy = rc.getTeam().opponent();
@@ -554,6 +618,13 @@ public strictfp class RobotPlayer {
         getHomeECID();
 
         //checks if on mission
+
+        if(rc.getRoundNum() == 1475){
+            if(rc.canEmpower(actionRadius)){
+                rc.empower(actionRadius);
+            }
+        }
+
 
 
         boolean winning = true;
@@ -577,17 +648,21 @@ public strictfp class RobotPlayer {
             }
         }
 
-        if (origin != null && onMission() && !arrived(actionRadius)) {
-            pathfind(rc.getLocation().directionTo(targetLoc));
-            return;
-        }
-
-        // Checking if within EC radius
-        for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, rc.getTeam())) {
-            if (robot.type == RobotType.ENLIGHTENMENT_CENTER) {
-                nearHome = true;
+        //set target location = to whatever home is broadcasting
+        if(rc.canGetFlag(homeID)){
+            int flag = rc.getFlag(homeID);
+            if(flag == 9999999){
+                targetLoc = null;
+            }
+            else if (flag != 0){
+                targetLoc = decodeFlagLocation(flag);
             }
         }
+
+        if(targetLoc != null && !arrived(actionRadius)){
+            pathfind(rc.getLocation().directionTo(targetLoc));
+        }
+
 
         // System.out.println("" + rc.getTeamVotes() + " " + rc.getRoundNum());
         double rand = Math.random();
