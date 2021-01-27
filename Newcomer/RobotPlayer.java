@@ -93,13 +93,6 @@ public strictfp class RobotPlayer {
             }
         }
 
-        //deletes dead robots
-//        for (int index = 0; index < friendlyIDs.size(); index++) {
-//            if (!rc.canGetFlag(friendlyIDs.get(index))) {
-//                friendlyIDs.remove(index);
-//                index--;
-//            }
-//        }
 
         ArrayList<Integer> newFlags = new ArrayList<Integer>();
         for (Integer ID : friendlyIDs) {
@@ -117,8 +110,7 @@ public strictfp class RobotPlayer {
                 if(allFlags.contains(flagToRemove)){
                     allFlags.remove(flagToRemove);
                 }
-            }
-            else if (!allFlags.contains(newFlag)) {
+            } else if (!allFlags.contains(newFlag)) {
                 allFlags.add(newFlag);
             }
         }
@@ -273,9 +265,9 @@ public strictfp class RobotPlayer {
         if (infToUse < 0) {infToUse = (int)(rc.getInfluence() * 0.25);}
 
         if (percentMade > 1) {
-            toChange = -1 * (int)(infToUse * 0.25); //save
+            toChange = -1 * (int)(infToUse * 0.1); //save
         } else if (percentMade < 0.05) {
-            toChange = (int)(lastRoundInf * 0.1);  //take
+            toChange = (int)(lastRoundInf * 0.25);  //take
         }
         infToUse += toChange;
 
@@ -296,10 +288,11 @@ public strictfp class RobotPlayer {
                 if (rc.canBid(1))
                     rc.bid(1);
             } else if (roundNum < 1250) {
-                if (rc.canBid((int)(infToUse * percentBid)))
-                    rc.bid((int)(infToUse * percentBid));
+                int bid = (int)(infToUse * percentBid);
+                if (rc.canBid(bid) && bid != 0)
+                    rc.bid(bid);
                 else
-                    rc.bid((int)(rc.getInfluence() * 0.1));
+                    rc.bid((int)(rc.getInfluence() * 0.15));
             } else {
                 rc.bid((int)(rc.getInfluence() * 0.40));
             }
